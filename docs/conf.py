@@ -184,7 +184,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
     ('index',
-     'airport-ei.tex',
+     'airport_ei.tex',
      u'Airport-EI Documentation',
      u"Apoorba Bibeka", 'manual'),
 ]
@@ -215,7 +215,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'airport-ei', u'Airport-EI Documentation',
+    ('index', 'airport_ei', u'Airport-EI Documentation',
      [u"Apoorba Bibeka"], 1)
 ]
 
@@ -229,9 +229,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'airport-ei', u'Airport-EI Documentation',
+    ('index', 'airport_ei', u'Airport-EI Documentation',
      u"Apoorba Bibeka", 'Airport-EI',
-     'Develop Texas Airport's Emission Inventory.', 'Miscellaneous'),
+     "Develop Texas Airport's Emission Inventory.", 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
