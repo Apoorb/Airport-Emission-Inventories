@@ -11,7 +11,6 @@ import datetime
 import pandas as pd
 import shapefile
 from dotenv import find_dotenv, load_dotenv
-from io import StringIO
 
 
 def get_project_root() -> Path:
@@ -25,7 +24,8 @@ PATH_RAW = os.path.join(PATH_TO_PROJECT_ROOT, "data", "raw")
 
 
 def connect_to_sql_server(
-    database_nm, server_nm="Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT"
+        database_nm: str,
+        server_nm: object = "Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT"
 ) -> pyodbc.Connection:
     """
     Function to connect to a particular database on the AEDT 3D sql server.
@@ -36,8 +36,8 @@ def connect_to_sql_server(
     """
     conn_ = pyodbc.connect(
         "Driver={SQL Server};"
-        "Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;"
-        "Database=fleet;"
+        f"Server={server_nm};"
+        f"Database={database_nm};"
         "Trusted_Connection=yes;"
     )
     return conn_
@@ -103,7 +103,8 @@ def read_shapefile(path_shp_file):
 
 def get_snake_case_dict(columns):
     """ Get columns in snake_case."""
-    return {col: re.sub(r"\W+", "_", inflection.underscore(col)) for col in columns}
+    return {col: re.sub(r"\W+", "_", inflection.underscore(col)) for col in
+            columns}
 
 
 if __name__ == "__main__":

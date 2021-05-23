@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import itertools
 import pyodbc
-from airportei.utilis import PATH_RAW, get_snake_case_dict, connect_to_sql_server
+from airportei.utilis import (PATH_RAW, get_snake_case_dict,
+                              connect_to_sql_server)
 
 
 def get_nfdc_ops(path_nfdc_may21_: str) -> dict[str, dict[str, list]]:
