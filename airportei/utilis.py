@@ -24,9 +24,9 @@ PATH_PROCESSED = os.path.join(PATH_TO_PROJECT_ROOT, "data", "processed")
 PATH_RAW = os.path.join(PATH_TO_PROJECT_ROOT, "data", "raw")
 
 
-def connect_to_sql_server(database_nm,
-                          server_nm="Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT"
-                          ) -> pyodbc.Connection:
+def connect_to_sql_server(
+    database_nm, server_nm="Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT"
+) -> pyodbc.Connection:
     """
     Function to connect to a particular database on the AEDT 3D sql server.
     Returns
@@ -34,10 +34,12 @@ def connect_to_sql_server(database_nm,
     conn_: pyodbc.Connection
         Connection object to access the data in SQL Server.
     """
-    conn_ = pyodbc.connect('Driver={SQL Server};'
-                          'Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;'
-                          'Database=fleet;'
-                          'Trusted_Connection=yes;')
+    conn_ = pyodbc.connect(
+        "Driver={SQL Server};"
+        "Server=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;"
+        "Database=fleet;"
+        "Trusted_Connection=yes;"
+    )
     return conn_
 
 
