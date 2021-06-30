@@ -2,8 +2,12 @@ import os
 import numpy as np
 import pandas as pd
 import itertools
-from airportei.utilis import (PATH_RAW, PATH_INTERIM, get_snake_case_dict,
-                              connect_to_sql_server)
+from airportei.utilis import (
+    PATH_RAW,
+    PATH_INTERIM,
+    get_snake_case_dict,
+    connect_to_sql_server,
+)
 
 
 def get_nfdc_ops(path_nfdc_may21_: str) -> dict[str, dict[str, list]]:
@@ -97,10 +101,8 @@ if __name__ == "__main__":
 
     path_nfdc_may21 = os.path.join(PATH_RAW, "nfdc_facilities.csv")
     path_tfmsc_19 = os.path.join(PATH_RAW, "madhu_files", "FAA_2019TFMSC.csv")
-    path_out_aedt_3d_airframe = os.path.join(PATH_INTERIM,
-                                             "aedt_3d_airframes.xlsx")
-    path_out_tfmsc_aircraft_ids = os.path.join(PATH_INTERIM,
-                                               "tfmsc_aircrafts.xlsx")
+    path_out_aedt_3d_airframe = os.path.join(PATH_INTERIM, "aedt_3d_airframes.xlsx")
+    path_out_tfmsc_aircraft_ids = os.path.join(PATH_INTERIM, "tfmsc_aircrafts.xlsx")
     nfdc_may21_dict = get_nfdc_ops(path_nfdc_may21)
     nfdc_df = nfdc_may21_dict["nfdc_facilities_may21_1"]
 
@@ -156,8 +158,14 @@ if __name__ == "__main__":
 
     fill_engine_type_df = (
         tfmsc_19_df_2[
-            ["aircraft_id", "aircraft_type", "aircraft_type_id", "engine_type",
-             "user_class", "facility_name"]
+            [
+                "aircraft_id",
+                "aircraft_type",
+                "aircraft_type_id",
+                "engine_type",
+                "user_class",
+                "facility_name",
+            ]
         ]
         .loc[lambda df: df.aircraft_id != -999]
         .loc[lambda df: ~df.engine_type.isnull()]
@@ -165,12 +173,9 @@ if __name__ == "__main__":
         .assign(
             aircraft_id=lambda df: df.aircraft_id.str.strip().str.lower(),
             aircraft_type=lambda df: df.aircraft_type.str.strip().str.lower(),
-            aircraft_type_id=lambda
-                df: df.aircraft_type_id.str.strip().str.lower(),
-            aircraft_id_and_type=lambda
-                df: df.aircraft_id + " " + df.aircraft_type,
-            aircraft_id_list=lambda
-                df: df.aircraft_id_and_type.str.lower().str.split(
+            aircraft_type_id=lambda df: df.aircraft_type_id.str.strip().str.lower(),
+            aircraft_id_and_type=lambda df: df.aircraft_id + " " + df.aircraft_type,
+            aircraft_id_list=lambda df: df.aircraft_id_and_type.str.lower().str.split(
                 " "
             ),
         )
@@ -199,10 +204,13 @@ if __name__ == "__main__":
 
     aedt_3d_airframe_1 = (
         aedt_3d_airframe.rename(columns=get_snake_case_dict(aedt_3d_airframe))
-        .rename(columns={"model": "aircraft_type",
-                         "engine_type": "engine_type_code",
-                         "engine_location": "engine_location_code"
-                         })
+        .rename(
+            columns={
+                "model": "aircraft_type",
+                "engine_type": "engine_type_code",
+                "engine_location": "engine_location_code",
+            }
+        )
         .assign(aircraft_type=lambda df: df.aircraft_type.str.strip().str.lower())
         .sort_values("aircraft_type")
         .reset_index(drop=True)
@@ -210,83 +218,68 @@ if __name__ == "__main__":
 
     aedt_3d_airframe_2 = aedt_3d_airframe_1.copy()
     for key, tab in aedt_3d_code_keys_tabs.items():
-        aedt_3d_code_val = pd.read_sql(
-            f"SELECT * FROM [dbo].[{tab}]", conn)
+        aedt_3d_code_val = pd.read_sql(f"SELECT * FROM [dbo].[{tab}]", conn)
         aedt_3d_code_val_1 = (
-            aedt_3d_code_val
-            .rename(columns=get_snake_case_dict(aedt_3d_code_val))
+            aedt_3d_code_val.rename(columns=get_snake_case_dict(aedt_3d_code_val))
             .rename(columns={"engine_location": "engine_location_code"})
             .rename(columns={"description": key.replace("code", "val")})
         )
-        aedt_3d_airframe_2 = (
-            aedt_3d_airframe_2
-            .merge(
-                aedt_3d_code_val_1,
-                on=[key],
-                how="left"
-            )
-            .drop(columns=key)
-        )
+        aedt_3d_airframe_2 = aedt_3d_airframe_2.merge(
+            aedt_3d_code_val_1, on=[key], how="left"
+        ).drop(columns=key)
 
-    fill_engine_type_df_aedt_merge = (
-        fill_engine_type_df
-        .merge(
-            aedt_3d_airframe_1,
-            on="aircraft_type",
-            how="left",
-            suffixes=["_tfmsc", "_aedt"]
-        )
+    fill_engine_type_df_aedt_merge = fill_engine_type_df.merge(
+        aedt_3d_airframe_1, on="aircraft_type", how="left", suffixes=["_tfmsc", "_aedt"]
     )
 
-    fill_engine_type_df_perfect_match_aedt = (
-        fill_engine_type_df_aedt_merge
-        .loc[lambda df: ~ df.airframe_id.isna()]
-    )
+    fill_engine_type_df_perfect_match_aedt = fill_engine_type_df_aedt_merge.loc[
+        lambda df: ~df.airframe_id.isna()
+    ]
 
-    fill_engine_type_df_no_match = (
-        fill_engine_type_df
-        .loc[fill_engine_type_df_aedt_merge.airframe_id.isna().values]
-    )
+    fill_engine_type_df_no_match = fill_engine_type_df.loc[
+        fill_engine_type_df_aedt_merge.airframe_id.isna().values
+    ]
 
-    fill_engine_type_df_no_match = (
-        fill_engine_type_df_no_match
-        .assign(
-            aircraft_id_cor=lambda df: df.aircraft_type_id,
-            closest_airframe_id_aedt="",
-            closest_airframe_type_aedt="",
-            justification=""
-        )
-        .filter(items=['aircraft_id', 'aircraft_type', 'engine_type',
-                       'aircraft_type_id', 'aircraft_id_and_type',
-                       'aircraft_id_cor', 'closest_airframe_id_aedt',
-                       'closest_airframe_type_aedt', 'justification',
-                       'aircraft_id_list', 'user_class', 'facility_name',
-
-                       ])
+    fill_engine_type_df_no_match = fill_engine_type_df_no_match.assign(
+        aircraft_id_cor=lambda df: df.aircraft_type_id,
+        closest_airframe_id_aedt="",
+        closest_airframe_type_aedt="",
+        justification="",
+    ).filter(
+        items=[
+            "aircraft_id",
+            "aircraft_type",
+            "engine_type",
+            "aircraft_type_id",
+            "aircraft_id_and_type",
+            "aircraft_id_cor",
+            "closest_airframe_id_aedt",
+            "closest_airframe_type_aedt",
+            "justification",
+            "aircraft_id_list",
+            "user_class",
+            "facility_name",
+        ]
     )
 
     fill_engine_type_df_no_match.to_excel(path_out_tfmsc_aircraft_ids)
 
     aedt_3d_airframe_2.to_excel(path_out_aedt_3d_airframe)
 
-    fill_engine_type_df_no_match_active = (
-        fill_engine_type_df_no_match
-        .loc[lambda df: df.aircraft_type_id == "FI8H"]
-        .assign(
-            aircraft_id_cor="F18H",
-            closest_airframe_id_aedt=4912,
-            closest_airframe_type_aedt="mcdonnell douglas f-4 phantom ii"
-        )
+    fill_engine_type_df_no_match_active = fill_engine_type_df_no_match.loc[
+        lambda df: df.aircraft_type_id == "FI8H"
+    ].assign(
+        aircraft_id_cor="F18H",
+        closest_airframe_id_aedt=4912,
+        closest_airframe_type_aedt="mcdonnell douglas f-4 phantom ii",
     )
 
-    fill_engine_type_df_no_match_active = (
-        fill_engine_type_df_no_match
-        .loc[lambda df: df.aircraft_type_id == "a10"]
-        .assign(
-            aircraft_id_cor="F18H",
-            closest_airframe_id_aedt=4912,
-            closest_airframe_type_aedt="mcdonnell douglas f-4 phantom ii"
-        )
+    fill_engine_type_df_no_match_active = fill_engine_type_df_no_match.loc[
+        lambda df: df.aircraft_type_id == "a10"
+    ].assign(
+        aircraft_id_cor="F18H",
+        closest_airframe_id_aedt=4912,
+        closest_airframe_type_aedt="mcdonnell douglas f-4 phantom ii",
     )
 
     tfmsc_19_df_2_has_aircraft_id = tfmsc_19_df_2.loc[lambda df: df.aircraft_id != -999]
