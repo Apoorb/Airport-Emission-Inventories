@@ -771,5 +771,3 @@ FLUSH TABLES;
 UPDATE FY21TCEQ_AirportEI.Texas_Facilities
 SET FacilityGroup = 'Commercial' where FacilityID in ('ABI','ACT','AMA','AUS','BPT','BRO','CLL','CRP','DAL','DFW','DRT','ELP','GGG','HOU',
 'HRL','IAH','ILE','LBB','LRD','MAF','MFE','SAT','SJT','SPS','TYR','VCT');
-
-
