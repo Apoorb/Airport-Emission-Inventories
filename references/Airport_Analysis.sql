@@ -716,7 +716,7 @@ SET FacilityGroup = 'Other_PU_Airports' where Used ='PU' and FacilityType not in
 
 FLUSH TABLES;
 UPDATE FY21TCEQ_AirportEI.Texas_Facilities
-SET FacilityGroup = 'Other_PU_Airports' where Used ='PU' and FacilityType in ('HELIPORT');
+SET FacilityGroup = 'Other_PU_Heliports' where Used ='PU' and FacilityType in ('HELIPORT');
 
 FLUSH TABLES;
 UPDATE FY21TCEQ_AirportEI.Texas_Facilities
@@ -724,7 +724,7 @@ SET FacilityGroup = 'Other_PR_Airports' where Used ='PR' and FacilityType not in
 
 FLUSH TABLES;
 UPDATE FY21TCEQ_AirportEI.Texas_Facilities
-SET FacilityGroup = 'Other_PR_Airports' where Used ='PR' and FacilityType in ('HELIPORT');
+SET FacilityGroup = 'Other_PR_Heliports' where Used ='PR' and FacilityType in ('HELIPORT');
 
 FLUSH TABLES;
 UPDATE FY21TCEQ_AirportEI.Texas_Facilities

@@ -4,7 +4,7 @@ setup(
     name='src',
     packages=find_packages(),
     version='0.1.0',
-    description='Develop Texas Airport's Emission Inventory.',
+    description="Develop Texas Airport's Emission Inventory.",
     author='Apoorba Bibeka',
     license='MIT',
 )
