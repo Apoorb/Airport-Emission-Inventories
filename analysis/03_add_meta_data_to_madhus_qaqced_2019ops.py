@@ -92,35 +92,44 @@ if __name__ == "__main__":
         lambda df: df.facility_id.isin(miss_ops2019_facility_ids)
     ]
     # Impute ops
-    miss_ops2019["ops_impute_annual"] = miss_ops2019[
-        [
-            "single_engine_ga",
-            "multi_engine_ga",
-            "jet_engine_ga",
-            "helicopters_ga",
-            "gliders_operational",
-            "military_operational",
-            "ultralights",
-            "operations_commercial",
-            "operations_commuter",
-            "operations_air_taxi",
-            "operations_ga_local",
-            "operations_ga_itin",
-            "operations_military",
-        ]
-    ].sum(axis=1)
+    miss_ops2019["ops_impute_annual"] = miss_ops2019["y2017_erg_ops"]
 
     miss_ops2019_1 = miss_ops2019.filter(
         items=["facility_id", "facility_name", "ops_impute_annual", "facility_type",
         "facility_group"]
     )
-    # Impute ops for two medical HELIPORT
+    # Impute ops for medical HELIPORT
     miss_ops2019_1.loc[
         lambda df: (df.facility_type == "HELIPORT")
                    & (df.facility_group == "Medical")
         ,
         "ops_impute_annual"
     ] = 156 # Based on Madhu's qaqc sheet.
+
+    # Impute ops for private heliports
+    miss_ops2019_1.loc[
+        lambda df: (df.ops_impute_annual.isna())
+                   & (df.facility_type == "HELIPORT")
+        ,
+        "ops_impute_annual"
+    ] = 110 # Based on ERG defaults
+
+    miss_ops2019_1.loc[
+        lambda df: (df.facility_group == "Farm/Ranch")
+        ,
+        "ops_impute_annual"
+    ] = 2 # Based on Farm/Ranch Data. 2 looked like a conservative estimate
+    # for small airport.
+
+    miss_ops2019_1.loc[
+        lambda df: (df.facility_group.isin(
+            ["Other_PU_Airports", "Other_PR_Airports"]))
+        ,
+        "ops_impute_annual"
+    ] = 110 # Based on Other private airport data. 110 looked like a
+    # conservative estimate for small airport.
+
+
 
     # Get annual to summer conversion factors from Madhu's QAQC 2019 Ops
     # spreadsheet.
