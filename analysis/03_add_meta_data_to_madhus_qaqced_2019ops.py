@@ -110,7 +110,8 @@ if __name__ == "__main__":
     ].sum(axis=1)
 
     miss_ops2019_1 = miss_ops2019.filter(
-        items=["facility_id", "ops_impute_annual", "facility_type", "facility_group"]
+        items=["facility_id", "facility_name", "ops_impute_annual", "facility_type",
+        "facility_group"]
     )
     # Impute ops for two medical HELIPORT
     miss_ops2019_1.loc[
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     assert all(miss_ops2019_2.ops_impute_summer > 0), "Need more imputation"
 
     miss_ops2019_2_fil = miss_ops2019_2.filter(
-        items=["facility_id", "ops_impute_annual", "ops_impute_summer"]
+        items=["facility_id", "facility_name", "ops_impute_annual", "ops_impute_summer"]
     )
 
     # Impute missing Ops
@@ -159,6 +160,7 @@ if __name__ == "__main__":
     ops2019_meta_imputed.loc[mask, "annual_operations"] = ops2019_meta_imputed.loc[
         mask, "ops_impute_annual"
     ]
+    mask = lambda df: df.ops_impute_summer.isna()
     ops2019_meta_imputed.loc[mask, "summer_daily"] = ops2019_meta_imputed.loc[
         mask, "ops_impute_summer"
     ]
