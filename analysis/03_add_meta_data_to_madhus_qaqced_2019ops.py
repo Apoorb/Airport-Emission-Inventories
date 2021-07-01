@@ -42,7 +42,7 @@ if __name__ == "__main__":
     # the ops2019. Removing the old metadata.
     ops2019_1 = (
         ops2019.rename(columns=get_snake_case_dict(ops2019))
-        .drop(columns=["facility_group"])
+        .drop(columns=["facility_group", "facility_name"])
         .assign(
             facility_id=lambda df: df.facility_id.astype(str),
             annual_operations=lambda df: df.annual_operations.replace(
@@ -66,6 +66,7 @@ if __name__ == "__main__":
     # Only get the following metadata columns.
     meta_cols = [
         "facility_id",
+        "facility_name",
         "facility_type",
         "airport_status_code",
         "ownership",
@@ -115,12 +116,11 @@ if __name__ == "__main__":
     )
     # Impute ops for two medical HELIPORT
     miss_ops2019_1.loc[
-        lambda df: (df.ops_impute_annual == 0)
-                   & (df.facility_type == "HELIPORT")
+        lambda df: (df.facility_type == "HELIPORT")
                    & (df.facility_group == "Medical")
         ,
         "ops_impute_annual"
-    ] = 1
+    ] = 156 # Based on Madhu's qaqc sheet.
 
     # Get annual to summer conversion factors from Madhu's QAQC 2019 Ops
     # spreadsheet.
@@ -149,18 +149,17 @@ if __name__ == "__main__":
     assert all(miss_ops2019_2.ops_impute_summer > 0), "Need more imputation"
 
     miss_ops2019_2_fil = miss_ops2019_2.filter(
-        items=["facility_id", "facility_name", "ops_impute_annual", "ops_impute_summer"]
+        items=["facility_id", "ops_impute_annual", "ops_impute_summer"]
     )
 
     # Impute missing Ops
     ops2019_meta_imputed = ops2019_meta.merge(
         miss_ops2019_2_fil, on=["facility_id"], how="left"
     )
-    mask = lambda df: df.annual_operations.isna()
+    mask = ops2019_meta_imputed.annual_operations.isna()
     ops2019_meta_imputed.loc[mask, "annual_operations"] = ops2019_meta_imputed.loc[
         mask, "ops_impute_annual"
     ]
-    mask = lambda df: df.ops_impute_summer.isna()
     ops2019_meta_imputed.loc[mask, "summer_daily"] = ops2019_meta_imputed.loc[
         mask, "ops_impute_summer"
     ]
