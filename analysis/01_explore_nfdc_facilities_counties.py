@@ -1,7 +1,12 @@
+"""
+Fix incorrect counties in NFDC data using Texas Boundaries and airport data.
+Created by: Axb
+Created on: June 2021
+"""
 import os
 import pandas as pd
 import geopandas as gpd
-from airportei.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict
+from analysis.scratch.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict
 
 
 if __name__ == "__main__":

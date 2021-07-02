@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import itertools
-from airportei.utilis import (
+from analysis.scratch.utilis import (
     PATH_RAW,
     PATH_INTERIM,
     get_snake_case_dict,
