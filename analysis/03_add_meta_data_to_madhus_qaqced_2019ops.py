@@ -13,14 +13,22 @@ if __name__ == "__main__":
     # 01_explore_nfdc_facilities_counties.py and some manual imputations by
     # Apoorb.
     path_cor_county = Path.home().joinpath(
-        PATH_INTERIM, "county_correction", "nfdc_vs_arpt_city_comp_filled.xlsx")
+        PATH_INTERIM, "county_correction", "nfdc_vs_arpt_city_comp_filled.xlsx"
+    )
     path_madhu_2019_fin = Path.home().joinpath(
         PATH_INTERIM, "madhu_ops_fleetmix", "madhu_qaqc_2019Operations.xlsx"
     )
     cor_counties_tx = pd.read_excel(
         path_cor_county,
         sheet_name="filled_data",
-        usecols=["facility_id", "city_arpt", "county_arpt", "fips_tx_boundar", "district_tx_boundar"])
+        usecols=[
+            "facility_id",
+            "city_arpt",
+            "county_arpt",
+            "fips_tx_boundar",
+            "district_tx_boundar",
+        ],
+    )
     # Madhu developed the 2019 ops data
     # (r"C:\Users\a-bibeka\Texas A&M Transportation Institute\Venugopal, "
     #  r"Madhusudhan - Airport Activity\Tasks\Task 4 Data Analysis and Quality "
@@ -95,41 +103,36 @@ if __name__ == "__main__":
     miss_ops2019["ops_impute_annual"] = miss_ops2019["y2017_erg_ops"]
 
     miss_ops2019_1 = miss_ops2019.filter(
-        items=["facility_id", "facility_name", "ops_impute_annual", "facility_type",
-        "facility_group"]
+        items=[
+            "facility_id",
+            "facility_name",
+            "ops_impute_annual",
+            "facility_type",
+            "facility_group",
+        ]
     )
     # Impute ops for medical HELIPORT
     miss_ops2019_1.loc[
-        lambda df: (df.facility_type == "HELIPORT")
-                   & (df.facility_group == "Medical")
-        ,
-        "ops_impute_annual"
-    ] = 156 # Based on Madhu's qaqc sheet.
+        lambda df: (df.facility_type == "HELIPORT") & (df.facility_group == "Medical"),
+        "ops_impute_annual",
+    ] = 156  # Based on Madhu's qaqc sheet.
 
     # Impute ops for private heliports
     miss_ops2019_1.loc[
-        lambda df: (df.ops_impute_annual.isna())
-                   & (df.facility_type == "HELIPORT")
-        ,
-        "ops_impute_annual"
-    ] = 110 # Based on ERG defaults
+        lambda df: (df.ops_impute_annual.isna()) & (df.facility_type == "HELIPORT"),
+        "ops_impute_annual",
+    ] = 110  # Based on ERG defaults
 
     miss_ops2019_1.loc[
-        lambda df: (df.facility_group == "Farm/Ranch")
-        ,
-        "ops_impute_annual"
-    ] = 2 # Based on Farm/Ranch Data. 2 looked like a conservative estimate
+        lambda df: (df.facility_group == "Farm/Ranch"), "ops_impute_annual"
+    ] = 2  # Based on Farm/Ranch Data. 2 looked like a conservative estimate
     # for small airport.
 
     miss_ops2019_1.loc[
-        lambda df: (df.facility_group.isin(
-            ["Other_PU_Airports", "Other_PR_Airports"]))
-        ,
-        "ops_impute_annual"
-    ] = 110 # Based on Other private airport data. 110 looked like a
+        lambda df: (df.facility_group.isin(["Other_PU_Airports", "Other_PR_Airports"])),
+        "ops_impute_annual",
+    ] = 110  # Based on Other private airport data. 110 looked like a
     # conservative estimate for small airport.
-
-
 
     # Get annual to summer conversion factors from Madhu's QAQC 2019 Ops
     # spreadsheet.
@@ -172,47 +175,42 @@ if __name__ == "__main__":
     ops2019_meta_imputed.loc[mask, "summer_daily"] = ops2019_meta_imputed.loc[
         mask, "ops_impute_summer"
     ]
-    assert all(ops2019_meta_imputed.annual_operations > 0), (
-        "Need more imputation")
+    assert all(ops2019_meta_imputed.annual_operations > 0), "Need more imputation"
 
     # Add corrected county, city, fips, and district.
     ops2019_meta_imputed_1 = pd.merge(
-        ops2019_meta_imputed.assign(
-            facility_id=lambda df: df.facility_id.str.lower()),
+        ops2019_meta_imputed.assign(facility_id=lambda df: df.facility_id.str.lower()),
         cor_counties_tx,
         on="facility_id",
-        how="left"
+        how="left",
     )
 
-    ops2019_meta_imputed_2 = (
-        ops2019_meta_imputed_1
-        .filter(
-            items=[
-                "county_arpt",
-                "city_arpt",
-                "district_tx_boundar",
-                "fips_tx_boundar",
-                "facility_id",
-                "facility_name",
-                "facility_group",
-                "annual_operations",
-                "summer_daily",
-                "tx_dot_group",
-                "medical_use",
-                "military_joint_use",
-                "otherservices",
-                "fuel_types",
-                "ownership",
-                "used",
-                "airport_status_code"
-                "farmor_ranch"
-            ]
-        )
+    ops2019_meta_imputed_2 = ops2019_meta_imputed_1.filter(
+        items=[
+            "county_arpt",
+            "city_arpt",
+            "district_tx_boundar",
+            "fips_tx_boundar",
+            "facility_id",
+            "facility_name",
+            "facility_group",
+            "annual_operations",
+            "summer_daily",
+            "tx_dot_group",
+            "medical_use",
+            "military_joint_use",
+            "otherservices",
+            "fuel_types",
+            "ownership",
+            "used",
+            "airport_status_code" "farmor_ranch",
+        ]
     )
-    assert all(~ ops2019_meta_imputed_1.fips_tx_boundar.isna()), (
-        "Check for missing counties.")
+    assert all(
+        ~ops2019_meta_imputed_1.fips_tx_boundar.isna()
+    ), "Check for missing counties."
 
     path_out_imputed_ops = Path.home().joinpath(
-        PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx")
+        PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
+    )
     ops2019_meta_imputed_2.to_excel(path_out_imputed_ops)
-
