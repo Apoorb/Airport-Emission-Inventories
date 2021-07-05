@@ -69,6 +69,28 @@ def clean_tfmsc(tfmsc_):
     return tfmsc_2_
 
 
+def fill_heli_fleet(tfmsc_df_ops2019_):
+    heli_fleetmix = pd.DataFrame({
+        "merge_key": ["x", "x", "x"],
+        "aircraft_id": [5081, 5271, 5331],
+        "aircraft_type": ["agusta aw-149", "eurocopter as 350 b1", "bell 429"],
+        "fleetmix": [1/3, 1/3, 1/3],
+        "source": ["https://www.helis.com/database/org/Texas-Helicopters/",
+                   "https://www.helis.com/database/org/Texas-Helicopters/",
+                   "https://www.helis.com/database/org/Texas-Helicopters/"]
+    })
+    tfmsc_df_ops2019_cat_na_heli = tfmsc_df_ops2019_.loc[lambda df:
+    df.facility_type == "HELIPORT"]
+    tfmsc_df_ops2019_cat_na_heli_ = (
+        tfmsc_df_ops2019_cat_na_heli.assign(merge_key="x")
+            .drop(columns=["aircraft_id", "aircraft_type_id", "aircraft_type",
+                           "fleetmix"])
+            .merge(heli_fleetmix, on="merge_key").drop(columns="merge_key")
+            .drop(columns="source")
+    )
+    return tfmsc_df_ops2019_cat_na_heli_
+
+
 def fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp_):
     """
     Use TASP and Military airports in the same district to fill the TASP and
@@ -89,6 +111,9 @@ def fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp_):
         lambda df: ~df.fleetmix.isna()
     ].sort_values(["district_tx_boundar", "facility_id", "aircraft_id"])
 
+    tfmsc_df_ops2019_cat_na_arpt = tfmsc_df_ops2019_cat_na.loc[lambda df:
+    df.facility_type != "HELIPORT"]
+
     if all(tfmsc_df_ops2019_cat_non_na.facility_group == "Military"):
         bexar_ops = tfmsc_df_ops2019_cat_non_na.loc[
             lambda df: df.county_arpt == "bexar"
@@ -100,11 +125,11 @@ def fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp_):
     # Check if we can use the airports from the same district to fill the
     # TASP data.
     assert (
-        set(tfmsc_df_ops2019_cat_na.district_tx_boundar.unique())
+        set(tfmsc_df_ops2019_cat_na_arpt.district_tx_boundar.unique())
         - set(tfmsc_df_ops2019_cat_non_na.district_tx_boundar.unique())
     ) == set(), "We cannot use districts to fill fleetmix."
     list_fill_df = []
-    for indx, row in tfmsc_df_ops2019_cat_na.iterrows():
+    for indx, row in tfmsc_df_ops2019_cat_na_arpt.iterrows():
         df_fil_district = tfmsc_df_ops2019_cat_non_na.loc[
             lambda df: df.district_tx_boundar == row.district_tx_boundar
         ]
@@ -140,9 +165,10 @@ def fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp_):
         fill_df = fill_row.merge(df_fil_district_fil_ops, on="district_tx_boundar")
         list_fill_df.append(fill_df)
 
-    cat_fill_dfs = pd.concat(list_fill_df)
+    arpt_fill_dfs = pd.concat(list_fill_df)
 
-    tfmsc_df_ops2019_tasp_1 = pd.concat([tfmsc_df_ops2019_cat_non_na, cat_fill_dfs])
+    tfmsc_df_ops2019_tasp_1 = pd.concat([tfmsc_df_ops2019_cat_non_na,
+                                         arpt_fill_dfs])
     return tfmsc_df_ops2019_tasp_1
 
 
@@ -184,6 +210,7 @@ def fill_farm_arpts(tfmsc_df_ops2019_farmranch_):
         .assign(merge_key="x")
         .drop(columns=["aircraft_id", "aircraft_type_id", "aircraft_type", "fleetmix"])
         .merge(farmranch_filler, on="merge_key", how="left")
+        .drop(columns="merge_key")
     )
 
     tfmsc_df_ops2019_farmranch_1 = pd.concat(
@@ -294,6 +321,7 @@ if __name__ == "__main__":
             "facility_id",
             "facility_name",
             "facility_group",
+            "facility_type",
             "county_arpt",
             "district_tx_boundar",
             "fips_tx_boundar",
@@ -313,41 +341,32 @@ if __name__ == "__main__":
     tfmsc_df_ops2019 = ops2019.merge(
         tfmsc_df_cln, on="facility_id", how="left"
     ).sort_values(by=["facility_id", "aircraft_id"])
-    tfmsc_df_ops2019_com = tfmsc_df_ops2019.loc[
+
+    tfmsc_df_ops2019_arpt = tfmsc_df_ops2019.loc[
+        lambda df: df.facility_type != "HELIPORT"]
+    tfmsc_df_ops2019_heli = fill_heli_fleet(tfmsc_df_ops2019)
+
+    tfmsc_df_ops2019_com = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Commercial"
     ]
     assert all(~tfmsc_df_ops2019_com.isna())
-    tfmsc_df_ops2019_rel = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_rel = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Reliever"
     ]
     assert all(~tfmsc_df_ops2019_rel.isna())
-    tfmsc_df_ops2019_tasp = tfmsc_df_ops2019.loc[lambda df: df.facility_group == "TASP"]
+    tfmsc_df_ops2019_tasp = tfmsc_df_ops2019_arpt.loc[lambda df: df.facility_group == "TASP"]
     tfmsc_df_ops2019_tasp_filled = fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp)
-
-    tfmsc_df_ops2019_med = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_med = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Medical"
     ]
-    assert all(
-        tfmsc_df_ops2019_med.aircraft_id.isna()
-    ), "Use generic helicopter types and fleetmix."
+    assert len(tfmsc_df_ops2019_med) == 0, "All medical facilities are " \
+                                           "heliports."
     # Fill manually
-    tfmsc_df_ops2019_mil = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_mil = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Military"
     ]
     tfmsc_df_ops2019_mil_filled = fill_tasp_mil_arpts(tfmsc_df_ops2019_mil)
-    tfmsc_df_ops2019_othprheli = tfmsc_df_ops2019.loc[
-        lambda df: df.facility_group == "Other_PR_Heliports"
-    ]
-    assert all(
-        tfmsc_df_ops2019_othprheli.aircraft_id.isna()
-    ), "Use generic helicopter types and fleetmix."
-    tfmsc_df_ops2019_othpuheli = tfmsc_df_ops2019.loc[
-        lambda df: df.facility_group == "Other_PU_Heliports"
-    ]
-    assert all(
-        tfmsc_df_ops2019_othpuheli.aircraft_id.isna()
-    ), "Use generic helicopter types and fleetmix."
-    tfmsc_df_ops2019_farmranch = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_farmranch = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Farm/Ranch"
     ]
     assert (
@@ -355,42 +374,43 @@ if __name__ == "__main__":
             tfmsc_df_ops2019_farmranch.groupby(["facility_id"]).aircraft_id.count() >= 1
         )
         == 1
-    ), ("1 airport with fleet " "mix data.")
+    ), ("1 airport with fleet mix data.")
     tfmsc_df_ops2019_farmranch_filled = fill_farm_arpts(tfmsc_df_ops2019_farmranch)
-    tfmsc_df_ops2019_othpuair = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_othpuair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PU_Airports"
     ]
     tfmsc_df_ops2019_othpuair_filled = fill_othpuair_arpts(tfmsc_df_ops2019_othpuair)
-
-    tfmsc_df_ops2019_othprair = tfmsc_df_ops2019.loc[
+    tfmsc_df_ops2019_othprair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PR_Airports"
     ]
     assert all(
         tfmsc_df_ops2019_othprair.aircraft_id.isna()
     ), "Use generic aircraft types and fleetmix."
-
     tfmsc_df_ops2019_othprair_filled = fill_othprair_arpts(
         tfmsc_df_ops2019_othprair, tfmsc_df_ops2019_othpuair
     )
 
-    output_dfs = {
-        "Commercial": tfmsc_df_ops2019_com,
-        "Reliever": tfmsc_df_ops2019_rel,
-        "TASP": tfmsc_df_ops2019_tasp_filled,
-        "Medical": tfmsc_df_ops2019_med,
-        "Military": tfmsc_df_ops2019_mil_filled,
-        "Other_PR_Heliports": tfmsc_df_ops2019_othprheli,
-        "Other_PU_Heliports": tfmsc_df_ops2019_othpuheli,
-        "Farm_Ranch": tfmsc_df_ops2019_farmranch_filled,
-        "Other_PR_Airports": tfmsc_df_ops2019_othprair_filled,
-        "Other_PU_Airports": tfmsc_df_ops2019_othpuair_filled,
-    }
-
+    tfmsc_df_ops2019_heli.facility_group.unique()
+    assert (set(["Other_PR_Heliports", "Other_PU_Heliports", "Medical"]) not
+            in set(tfmsc_df_ops2019_arpt.facility_group.unique())), (
+        'There shouldnt be any airport in "Other_PR_Heliports", "Other_PU_Heliports", "Medical"')
+    tfmsc_df_ops2019_1 = pd.concat([
+        tfmsc_df_ops2019_heli,
+        tfmsc_df_ops2019_com,
+        tfmsc_df_ops2019_rel,
+        tfmsc_df_ops2019_tasp_filled,
+        tfmsc_df_ops2019_mil_filled,
+        tfmsc_df_ops2019_farmranch_filled,
+        tfmsc_df_ops2019_othpuair_filled,
+        tfmsc_df_ops2019_othprair_filled
+    ])
+    assert (len(tfmsc_df_ops2019_1.facility_id.unique()) == 2037), (
+        "There should be 2037 facilities.")
+    tfmsc_df_ops2019_grp = tfmsc_df_ops2019_1.groupby("facility_group")
     path_fleetmix_clean = Path.home().joinpath(
         PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
     )
-
     writer = pd.ExcelWriter(path_fleetmix_clean, engine="xlsxwriter")
-    for shnm, df in output_dfs.items():
-        df.to_excel(writer, shnm, index=False)
+    for shnm, df in tfmsc_df_ops2019_grp:
+        df.to_excel(writer, shnm.replace("/", "_"), index=False)
     writer.save()

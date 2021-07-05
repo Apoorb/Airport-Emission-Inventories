@@ -194,6 +194,7 @@ if __name__ == "__main__":
             "facility_id",
             "facility_name",
             "facility_group",
+            "facility_type",
             "annual_operations",
             "summer_daily",
             "tx_dot_group",
