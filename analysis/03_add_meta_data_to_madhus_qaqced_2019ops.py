@@ -5,7 +5,7 @@ Created on: 06/30/2021
 """
 from pathlib import Path
 import pandas as pd
-from analysis.scratch.utilis import connect_to_mariadb, get_snake_case_dict, PATH_INTERIM
+from airportei.utilis import connect_to_mariadb, get_snake_case_dict, PATH_INTERIM
 
 
 if __name__ == "__main__":

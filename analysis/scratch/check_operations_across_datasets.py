@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from analysis.scratch.utilis import PATH_RAW, get_snake_case_dict
+from airportei.utilis import PATH_RAW, get_snake_case_dict
 
 
 if __name__ == "__main__":

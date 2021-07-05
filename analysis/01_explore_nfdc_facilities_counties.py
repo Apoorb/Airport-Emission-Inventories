@@ -6,7 +6,7 @@ Created on: June 2021
 import os
 import pandas as pd
 import geopandas as gpd
-from analysis.scratch.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict
+from airportei.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict
 
 
 if __name__ == "__main__":
