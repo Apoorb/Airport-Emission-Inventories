@@ -29,13 +29,6 @@ def fill_tasp_arpts_prj(taf_ops2019_tasp_):
     taf_ops2019_tasp_non_na = taf_ops2019_tasp_.loc[
         lambda df: ~df.proj_fac.isna()
     ].sort_values(["district_tx_boundar", "facility_id", "sysyear"])
-
-    if all(taf_ops2019_tasp_non_na.facility_group == "Military"):
-        bexar_ops = taf_ops2019_tasp_non_na.loc[
-            lambda df: df.county_arpt == "bexar"
-        ].assign(county_arpt="travis", district_tx_boundar="Austin")
-        travis_ops = bexar_ops
-        tfmsc_df_ops2019_tasp_non_na = pd.concat([taf_ops2019_tasp_non_na, travis_ops])
     # Check if we can use the airports from the same district to fill the
     # TASP data.
     assert (
