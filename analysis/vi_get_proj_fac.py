@@ -217,18 +217,25 @@ if __name__ == "__main__":
         dtype={"Year": "float", "mil_proj_fac": "float", "com_av_proj_fac": "float"},
     )
 
-    taf_ops2019_med_1 = taf_ops2019_med.assign(proj_fac=1)
+    taf_ops2019_med_1 = (
+        taf_ops2019_med
+        .assign(sysyear=[range(2011, 2051)]*len(taf_ops2019_med))
+        .explode("sysyear")
+        .assign(proj_fac=1)
+    )
     taf_ops2019_mil_1 = (
         taf_ops2019_mil.assign(merge_col="x")
         .merge(aeo_proj_fac.assign(merge_col="x"), on="merge_col", how="left")
         .assign(proj_fac=lambda df: df.mil_proj_fac)
         .drop(columns=["merge_col", "mil_proj_fac", "com_av_proj_fac"])
+        .rename(columns={"Year": "sysyear"})
     )
     taf_ops2019_oth_1 = (
         taf_ops2019_oth.assign(merge_col="x")
         .merge(aeo_proj_fac.assign(merge_col="x"), on="merge_col", how="left")
         .assign(proj_fac=lambda df: df.com_av_proj_fac)
         .drop(columns=["merge_col", "mil_proj_fac", "com_av_proj_fac"])
+        .rename(columns={"Year": "sysyear"})
     )
 
     taf_df_ops2019_1 = pd.concat(
@@ -242,14 +249,43 @@ if __name__ == "__main__":
         ]
     )
 
+    # Fill 2046 to 2050 projection factors.
+    fac_with_46_50_data = taf_df_ops2019_1.loc[
+        lambda df: (df.sysyear == 2046), "facility_id"].values
+    taf_df_ops2019_46_50_prst = taf_df_ops2019_1.loc[
+        lambda df: (df.facility_id.isin(fac_with_46_50_data))]
+
+    taf_df_ops_fill_46_50 = taf_df_ops2019_1.loc[
+        lambda df: ~ (df.facility_id.isin(fac_with_46_50_data))]
+    fill_values_46_50 = (
+        taf_df_ops_fill_46_50
+        .loc[lambda df :df.sysyear == 2045]
+        .assign(sysyear=[range(2045, 2051)]*len(taf_df_ops_fill_46_50.facility_id.unique()))
+        .explode("sysyear")
+    )
+
+    filled_values_45_50 = pd.concat(
+        [taf_df_ops_fill_46_50.loc[lambda df :df.sysyear < 2045],
+        fill_values_46_50]
+    )
+
+    taf_df_ops2019_46_50_all = pd.concat([taf_df_ops2019_46_50_prst,
+                                         filled_values_45_50])
+
+    taf_df_ops2019_46_50_all.sort_values(["facility_id", "sysyear"],
+                                         inplace=True)
+
     assert (
-        len(taf_df_ops2019_1.facility_id.unique()) == 2037
+        len(taf_df_ops2019_46_50_all.facility_id.unique()) == 2037
     ), "There should be 2037 facilities."
     assert all(
-        np.ravel(~taf_df_ops2019_1[["proj_fac"]].isna().values)
+        np.ravel(~taf_df_ops2019_46_50_all[["proj_fac"]].isna().values)
     ), "Check for na values."
+    assert all((taf_df_ops2019_46_50_all.groupby([
+        "facility_id"]).sysyear.count()
+            == 40).values), ("Check for missing years.")
 
-    taf_df_ops2019_grp = taf_df_ops2019_1.groupby("facility_group")
+    taf_df_ops2019_grp = taf_df_ops2019_46_50_all.groupby("facility_group")
 
     path_proj_fac_clean = Path.home().joinpath(
         PATH_INTERIM, "proj_fac_axb_07_11_2021.xlsx"
