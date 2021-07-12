@@ -10,7 +10,7 @@ from airportei.utilis import connect_to_mariadb, get_snake_case_dict, PATH_INTER
 
 if __name__ == "__main__":
     # Corrected county based on the spatial join. Output from
-    # 01_explore_nfdc_facilities_counties.py and some manual imputations by
+    # i_explore_nfdc_facilities_counties.py and some manual imputations by
     # Apoorb.
     path_cor_county = Path.home().joinpath(
         PATH_INTERIM, "county_correction", "nfdc_vs_arpt_city_comp_filled.xlsx"

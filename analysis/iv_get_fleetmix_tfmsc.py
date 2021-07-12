@@ -1,6 +1,6 @@
 """
 Develop fleet mix from TFMSC data.
-Created on: 7/20/2021
+Created on: 7/08/2021
 Created by: Apoorba Bibeka
 """
 from pathlib import Path
@@ -136,23 +136,23 @@ def fill_heli_fleet(tfmsc_df_ops2019_):
     return tfmsc_df_ops2019_cat_na_heli_
 
 
-def fill_tasp_mil_arpts(tfmsc_df_ops2019_tasp_):
+def fill_tasp_mil_arpts(tfmsc_df_ops2019_cat_):
     """
     Use TASP and Military airports in the same district to fill the TASP and
     Military airport fleet mix data.
     Parameters
     ----------
-    tfmsc_df_ops2019_tasp_
+    tfmsc_df_ops2019_cat_
 
     Returns
     -------
 
     """
-    tfmsc_df_ops2019_cat_na = tfmsc_df_ops2019_tasp_.loc[
+    tfmsc_df_ops2019_cat_na = tfmsc_df_ops2019_cat_.loc[
         lambda df: df.fleetmix.isna()
     ].sort_values(["district_tx_boundar", "facility_id", "aircraft_id"])
 
-    tfmsc_df_ops2019_cat_non_na = tfmsc_df_ops2019_tasp_.loc[
+    tfmsc_df_ops2019_cat_non_na = tfmsc_df_ops2019_cat_.loc[
         lambda df: ~df.fleetmix.isna()
     ].sort_values(["district_tx_boundar", "facility_id", "aircraft_id"])
 
@@ -403,7 +403,6 @@ if __name__ == "__main__":
     path_ops2019_clean = Path.home().joinpath(
         PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
     )
-
     ops2019 = pd.read_excel(
         path_ops2019_clean,
         usecols=[
@@ -425,7 +424,7 @@ if __name__ == "__main__":
     )
     path_tfmsc = Path.home().joinpath(PATH_RAW, "madhu_files", "FAA_2019TFMSC.csv")
     path_tfmsc_aedt = Path.home().joinpath(
-        PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v2_xx.xlsx"
+        PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v3_xx.xlsx"
     )
     tfmsc_df = pd.read_csv(path_tfmsc)
     tfmsc_aedt_map = pd.read_excel(path_tfmsc_aedt, index_col=0)
