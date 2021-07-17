@@ -104,12 +104,12 @@ def fill_heli_fleet(tfmsc_df_ops2019_):
     heli_fleetmix = pd.DataFrame(
         {
             "merge_key": ["x", "x", "x"],
-            "aircraft_id": [5238, 5271, 5331],
-            "closest_airframe_id_aedt": [5238, 5271, 5331],
-            "aircraft_type": ["agusta a119", "eurocopter as 350 b1", "bell 429"],
+            "aircraft_id": [5238, 5177, 5331],
+            "closest_airframe_id_aedt": [5238, 5177, 5331],
+            "aircraft_type": ["agusta a119", "eurocopter ec-130", "bell 429"],
             "closest_airframe_type_aedt": [
                 "agusta a119",
-                "eurocopter as 350 b1",
+                "eurocopter ec-130",
                 "bell 429",
             ],
             "fleetmix": [1 / 3, 1 / 3, 1 / 3],
@@ -416,16 +416,13 @@ def get_aedt_engine_id_map():
         PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v4.xlsx"
     )
     tfmsc_aedt_map = pd.read_excel(path_tfmsc_aedt, index_col=0)
-    tfmsc_aedt_map_1 = tfmsc_aedt_map.loc[
-        lambda df: ~df.closest_airframe_id_aedt.isna()
-    ].drop(
-        columns=[
-            "justification",
-            "useful information",
-            "aircraft_id_list",
-            "user_class",
-            "facility_name",
-        ]
+    tfmsc_aedt_map_1 = (
+        tfmsc_aedt_map.loc[lambda df: ~df.closest_airframe_id_aedt.isna()]
+        .filter(items=["closest_airframe_id_aedt"])
+        .drop_duplicates(["closest_airframe_id_aedt"])
+    )
+    tfmsc_aedt_map_1 = pd.concat(
+        [tfmsc_aedt_map_1, pd.DataFrame({"closest_airframe_id_aedt": [5177, 5331]})]
     )
     equip_db_fil = (
         equip_db.rename(columns=get_snake_case_dict(equip_db))
@@ -632,12 +629,18 @@ if __name__ == "__main__":
     tfmsc_df_ops2019_2 = pd.merge(
         tfmsc_df_ops2019_1, engine_map, on="closest_airframe_id_aedt"
     )
+    assert len(tfmsc_df_ops2019_2) == len(tfmsc_df_ops2019_1)
     assert np.allclose(
         tfmsc_df_ops2019_2.groupby("facility_id").fleetmix.sum().values, 1
     )
-    assert tfmsc_df_ops2019_2.eng_id.isna().sum() == 0, "Check for missing engine ids."
+    mask = ~np.isclose(
+        tfmsc_df_ops2019_2.groupby("facility_id").fleetmix.transform("sum").values, 1
+    )
+    test = tfmsc_df_ops2019_2[mask]
+    assert (
+        tfmsc_df_ops2019_2.engine_id.isna().sum() == 0
+    ), "Check for missing engine ids."
     tfmsc_df_ops2019_grp = tfmsc_df_ops2019_2.groupby("facility_group")
-
     path_fleetmix_clean = Path.home().joinpath(
         PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
     )
