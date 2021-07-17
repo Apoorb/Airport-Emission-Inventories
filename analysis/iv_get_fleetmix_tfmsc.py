@@ -428,7 +428,14 @@ def get_aedt_engine_id_map():
         equip_db.rename(columns=get_snake_case_dict(equip_db))
         .sort_values(["airframe_id", "engine_id"])
         .groupby("airframe_id")
-        .engine_id.first()
+        .agg(
+            engine_id=("engine_id", "first"),
+            engine_mod_id=("engine_mod_id", "first"),
+            anp_airplane_id=("anp_airplane_id", "first"),
+            anp_helicopter_id=("anp_helicopter_id", "first"),
+            bada_id=("bada_id", "first"),
+            bada4_id=("bada4_id", "first"),
+        )
         .reset_index()
     )
 
