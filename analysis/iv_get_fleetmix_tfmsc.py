@@ -6,8 +6,12 @@ Created by: Apoorba Bibeka
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from airportei.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict, \
-    connect_to_sql_server
+from airportei.utilis import (
+    PATH_RAW,
+    PATH_INTERIM,
+    get_snake_case_dict,
+    connect_to_sql_server,
+)
 
 
 def clean_tfmsc(tfmsc_, tfmsc_aedt_map_):
@@ -431,14 +435,12 @@ def get_aedt_engine_id_map():
         .reset_index()
     )
 
-    tfmsc_aedt_map_1_eng_na_filled = (
-        tfmsc_aedt_map_1
-        .merge(
-            equip_db_fil,
-            left_on="closest_airframe_id_aedt",
-            right_on="airframe_id",
-            how="left",
-    ))
+    tfmsc_aedt_map_1_eng_na_filled = tfmsc_aedt_map_1.merge(
+        equip_db_fil,
+        left_on="closest_airframe_id_aedt",
+        right_on="airframe_id",
+        how="left",
+    )
     assert tfmsc_aedt_map_1_eng_na_filled.engine_id.isna().sum() == 0
     return tfmsc_aedt_map_1_eng_na_filled
 
@@ -501,8 +503,7 @@ if __name__ == "__main__":
     ]
     tfmsc_df_ops2019_heli = fill_heli_fleet(tfmsc_df_ops2019)
     assert np.allclose(
-        tfmsc_df_ops2019_heli.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_heli.groupby("facility_id").fleetmix.sum().values, 1
     )
     tfmsc_df_ops2019_com = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Commercial"
@@ -511,8 +512,7 @@ if __name__ == "__main__":
         ops2019.loc[lambda df: df.facility_group == "Commercial", "facility_id"].values
     )
     assert np.allclose(
-        tfmsc_df_ops2019_com.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_com.groupby("facility_id").fleetmix.sum().values, 1
     )
     assert (
         set(tfmsc_df_ops2019_com.facility_id.unique()) == com_fac
@@ -524,8 +524,7 @@ if __name__ == "__main__":
         ops2019.loc[lambda df: df.facility_group == "Reliever", "facility_id"].values
     )
     assert np.allclose(
-        tfmsc_df_ops2019_rel.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_rel.groupby("facility_id").fleetmix.sum().values, 1
     )
     assert (
         set(tfmsc_df_ops2019_rel.facility_id.unique()) == rel_fac
@@ -542,8 +541,7 @@ if __name__ == "__main__":
         ].values
     )
     assert np.allclose(
-        tfmsc_df_ops2019_tasp_filled.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_tasp_filled.groupby("facility_id").fleetmix.sum().values, 1
     )
     assert (
         set(tfmsc_df_ops2019_tasp_filled.facility_id.unique()) == tasp_fac
@@ -558,8 +556,7 @@ if __name__ == "__main__":
     ]
     tfmsc_df_ops2019_mil_filled = fill_tasp_mil_arpts(tfmsc_df_ops2019_mil)
     assert np.allclose(
-        tfmsc_df_ops2019_mil_filled.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_mil_filled.groupby("facility_id").fleetmix.sum().values, 1
     )
     tfmsc_df_ops2019_farmranch = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Farm/Ranch"
@@ -577,15 +574,14 @@ if __name__ == "__main__":
     tfmsc_df_ops2019_farmranch_filled = fill_farm_arpts(tfmsc_df_ops2019_farmranch)
     assert np.allclose(
         tfmsc_df_ops2019_farmranch_filled.groupby("facility_id").fleetmix.sum().values,
-        1
+        1,
     )
     tfmsc_df_ops2019_othpuair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PU_Airports"
     ]
     tfmsc_df_ops2019_othpuair_filled = fill_othpuair_arpts(tfmsc_df_ops2019_othpuair)
     assert np.allclose(
-        tfmsc_df_ops2019_othpuair_filled.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_othpuair_filled.groupby("facility_id").fleetmix.sum().values, 1
     )
     tfmsc_df_ops2019_othprair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PR_Airports"
@@ -598,8 +594,7 @@ if __name__ == "__main__":
         tfmsc_df_ops2019_othprair, tfmsc_df_ops2019_othpuair
     )
     assert np.allclose(
-        tfmsc_df_ops2019_othprair_filled.groupby("facility_id").fleetmix.sum().values,
-        1
+        tfmsc_df_ops2019_othprair_filled.groupby("facility_id").fleetmix.sum().values, 1
     )
     tfmsc_df_ops2019_heli.facility_group.unique()
     assert set(["Other_PR_Heliports", "Other_PU_Heliports", "Medical"]) not in set(
@@ -631,20 +626,16 @@ if __name__ == "__main__":
         )
     ), "Check for na values."
     assert np.allclose(
-        tfmsc_df_ops2019_1.groupby("facility_id").fleetmix.sum().values,
-        1)
+        tfmsc_df_ops2019_1.groupby("facility_id").fleetmix.sum().values, 1
+    )
     engine_map = get_aedt_engine_id_map()
     tfmsc_df_ops2019_2 = pd.merge(
-        tfmsc_df_ops2019_1,
-        engine_map,
-        on="closest_airframe_id_aedt"
+        tfmsc_df_ops2019_1, engine_map, on="closest_airframe_id_aedt"
     )
     assert np.allclose(
-        tfmsc_df_ops2019_2.groupby("facility_id").fleetmix.sum().values,
-        1)
-    assert (tfmsc_df_ops2019_2.eng_id.isna().sum() == 0), (
-        "Check for missing engine ids."
+        tfmsc_df_ops2019_2.groupby("facility_id").fleetmix.sum().values, 1
     )
+    assert tfmsc_df_ops2019_2.eng_id.isna().sum() == 0, "Check for missing engine ids."
     tfmsc_df_ops2019_grp = tfmsc_df_ops2019_2.groupby("facility_group")
 
     path_fleetmix_clean = Path.home().joinpath(
@@ -654,4 +645,3 @@ if __name__ == "__main__":
     for shnm, df in tfmsc_df_ops2019_grp:
         df.to_excel(writer, shnm.replace("/", "_"), index=False)
     writer.save()
-

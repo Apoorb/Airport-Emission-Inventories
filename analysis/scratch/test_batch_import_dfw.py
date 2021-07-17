@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import urllib
@@ -19,38 +18,45 @@ if __name__ == "__main__":
         PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
     )
     fleetmix = pd.read_excel(path_fleetmix_clean, "Commercial")
-    fleetmix_dfw = fleetmix.loc[lambda df: df.facility_id == "dfw",
-        ["facility_id", "annual_operations", "fleetmix", "closest_airframe_id_aedt",
-                                "eng_id"]]
+    fleetmix_dfw = fleetmix.loc[
+        lambda df: df.facility_id == "dfw",
+        [
+            "facility_id",
+            "annual_operations",
+            "fleetmix",
+            "closest_airframe_id_aedt",
+            "eng_id",
+        ],
+    ]
 
-    fleetmix_dfw_1 = (
-        fleetmix_dfw
-        .assign(
-            ops_fleet=lambda df: df.annual_operations * df.fleetmix
-        )
+    fleetmix_dfw_1 = fleetmix_dfw.assign(
+        ops_fleet=lambda df: df.annual_operations * df.fleetmix
     )
     conn = connect_to_sql_server(database_nm="FLEET")
     eng_df = pd.read_sql("SELECT * FROM [dbo].[FLT_ENGINES]", conn)
     airfm_df = pd.read_sql("SELECT * FROM [dbo].[FLT_AIRFRAMES]", conn)
     conn.close()
 
-    eng_df_1 = (eng_df
-     .rename(columns=get_snake_case_dict(eng_df))
-     .filter(items=["engine_id", "engine_code"])
-     .rename(columns={"engine_id": "eng_id"})
-     )
+    eng_df_1 = (
+        eng_df.rename(columns=get_snake_case_dict(eng_df))
+        .filter(items=["engine_id", "engine_code"])
+        .rename(columns={"engine_id": "eng_id"})
+    )
 
-    airfm_df_1 = (airfm_df
-     .rename(columns=get_snake_case_dict(airfm_df))
-     .filter(items=["airframe_id", "model"])
-     .rename(columns={"model": "arfm_mod"})
-     )
+    airfm_df_1 = (
+        airfm_df.rename(columns=get_snake_case_dict(airfm_df))
+        .filter(items=["airframe_id", "model"])
+        .rename(columns={"model": "arfm_mod"})
+    )
 
     fleetmix_dfw_1.columns
 
-    fleetmix_dfw_1 = fleetmix_dfw.merge(eng_df_1, on="eng_id",
-                                        how="left").merge(
-        airfm_df_1, left_on="closest_airframe_id_aedt", right_on="airframe_id", how="left")
+    fleetmix_dfw_1 = fleetmix_dfw.merge(eng_df_1, on="eng_id", how="left").merge(
+        airfm_df_1,
+        left_on="closest_airframe_id_aedt",
+        right_on="airframe_id",
+        how="left",
+    )
     fleetmix_dfw_1.iloc[0]
     conn = connect_to_sql_server(database_nm="2019_IAH_3152021")
     air_ops = pd.read_sql("SELECT * FROM [dbo].[AIR_OPERATION]", conn)
@@ -62,14 +68,21 @@ if __name__ == "__main__":
 
     conn = connect_to_sql_server(database_nm="dfw_study")
     cur = conn.cursor()
-    cur.execute("ALTER TABLE [dbo].[AIR_OPERATION] NOCHECK CONSTRAINT FK__AIR_OPERATION__AIRCRAFT_ID")
+    cur.execute(
+        "ALTER TABLE [dbo].[AIR_OPERATION] NOCHECK CONSTRAINT FK__AIR_OPERATION__AIRCRAFT_ID"
+    )
     conn.close()
     quoted = urllib.parse.quote_plus(
-        "DRIVER={SQL Server};SERVER=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;DATABASE=dfw_study")
-    engine = create_engine('mssql+pyodbc:///?odbc_connect={}'.format(quoted))
+        "DRIVER={SQL Server};SERVER=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;DATABASE=dfw_study"
+    )
+    engine = create_engine("mssql+pyodbc:///?odbc_connect={}".format(quoted))
 
-    air_ops.to_sql('AIR_OPERATION', schema='dbo', con=engine, chunksize=200,
-              method='multi', index=False, if_exists='append')
-
-
-
+    air_ops.to_sql(
+        "AIR_OPERATION",
+        schema="dbo",
+        con=engine,
+        chunksize=200,
+        method="multi",
+        index=False,
+        if_exists="append",
+    )
