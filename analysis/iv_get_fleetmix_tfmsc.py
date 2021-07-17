@@ -6,7 +6,8 @@ Created by: Apoorba Bibeka
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from airportei.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict
+from airportei.utilis import PATH_RAW, PATH_INTERIM, get_snake_case_dict, \
+    connect_to_sql_server
 
 
 def clean_tfmsc(tfmsc_, tfmsc_aedt_map_):
@@ -99,11 +100,11 @@ def fill_heli_fleet(tfmsc_df_ops2019_):
     heli_fleetmix = pd.DataFrame(
         {
             "merge_key": ["x", "x", "x"],
-            "aircraft_id": [5081, 5271, 5331],
-            "closest_airframe_id_aedt": [5081, 5271, 5331],
-            "aircraft_type": ["agusta aw-149", "eurocopter as 350 b1", "bell 429"],
+            "aircraft_id": [5238, 5271, 5331],
+            "closest_airframe_id_aedt": [5238, 5271, 5331],
+            "aircraft_type": ["agusta a119", "eurocopter as 350 b1", "bell 429"],
             "closest_airframe_type_aedt": [
-                "agusta aw-149",
+                "agusta a119",
                 "eurocopter as 350 b1",
                 "bell 429",
             ],
@@ -156,17 +157,19 @@ def fill_tasp_mil_arpts(tfmsc_df_ops2019_cat_):
         lambda df: ~df.fleetmix.isna()
     ].sort_values(["district_tx_boundar", "facility_id", "aircraft_id"])
 
+    tfmsc_df_ops2019_cat_non_na_temp = tfmsc_df_ops2019_cat_non_na.copy()
+
     tfmsc_df_ops2019_cat_na_arpt = tfmsc_df_ops2019_cat_na.loc[
         lambda df: df.facility_type != "HELIPORT"
     ]
 
-    if all(tfmsc_df_ops2019_cat_non_na.facility_group == "Military"):
-        bexar_ops = tfmsc_df_ops2019_cat_non_na.loc[
+    if all(tfmsc_df_ops2019_cat_non_na_temp.facility_group == "Military"):
+        bexar_ops = tfmsc_df_ops2019_cat_non_na_temp.loc[
             lambda df: df.county_arpt == "bexar"
         ].assign(county_arpt="travis", district_tx_boundar="Austin")
         travis_ops = bexar_ops
-        tfmsc_df_ops2019_cat_non_na = pd.concat(
-            [tfmsc_df_ops2019_cat_non_na, travis_ops]
+        tfmsc_df_ops2019_cat_non_na_temp = pd.concat(
+            [tfmsc_df_ops2019_cat_non_na_temp, travis_ops]
         )
     # Check if we can use the airports from the same district to fill the
     # TASP data.
@@ -176,7 +179,7 @@ def fill_tasp_mil_arpts(tfmsc_df_ops2019_cat_):
     ) == set(), "We cannot use districts to fill fleetmix."
     list_fill_df = []
     for indx, row in tfmsc_df_ops2019_cat_na_arpt.iterrows():
-        df_fil_district = tfmsc_df_ops2019_cat_non_na.loc[
+        df_fil_district = tfmsc_df_ops2019_cat_non_na_temp.loc[
             lambda df: df.district_tx_boundar == row.district_tx_boundar
         ]
 
@@ -399,6 +402,47 @@ def fill_othprair_arpts(tfmsc_df_ops2019_othprair_, tfmsc_df_ops2019_othpuair_):
     return tfmsc_df_ops2019_othprair_1
 
 
+def get_aedt_engine_id_map():
+    """Add engine ids."""
+    conn = connect_to_sql_server(database_nm="FLEET")
+    def_engine_db = pd.read_sql("SELECT * FROM [dbo].[FLT_DEFAULT_ENGINES]", conn)
+    equip_db = pd.read_sql("SELECT * FROM [dbo].[FLT_EQUIPMENT]", conn)
+    conn.close()
+    path_tfmsc_aedt = Path.home().joinpath(
+        PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v4.xlsx"
+    )
+    tfmsc_aedt_map = pd.read_excel(path_tfmsc_aedt, index_col=0)
+    tfmsc_aedt_map_1 = tfmsc_aedt_map.loc[
+        lambda df: ~df.closest_airframe_id_aedt.isna()
+    ].drop(
+        columns=[
+            "justification",
+            "useful information",
+            "aircraft_id_list",
+            "user_class",
+            "facility_name",
+        ]
+    )
+    equip_db_fil = (
+        equip_db.rename(columns=get_snake_case_dict(equip_db))
+        .sort_values(["airframe_id", "engine_id"])
+        .groupby("airframe_id")
+        .engine_id.first()
+        .reset_index()
+    )
+
+    tfmsc_aedt_map_1_eng_na_filled = (
+        tfmsc_aedt_map_1
+        .merge(
+            equip_db_fil,
+            left_on="closest_airframe_id_aedt",
+            right_on="airframe_id",
+            how="left",
+    ))
+    assert tfmsc_aedt_map_1_eng_na_filled.engine_id.isna().sum() == 0
+    return tfmsc_aedt_map_1_eng_na_filled
+
+
 if __name__ == "__main__":
     path_ops2019_clean = Path.home().joinpath(
         PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
@@ -424,7 +468,7 @@ if __name__ == "__main__":
     )
     path_tfmsc = Path.home().joinpath(PATH_RAW, "madhu_files", "FAA_2019TFMSC.csv")
     path_tfmsc_aedt = Path.home().joinpath(
-        PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v3_xx.xlsx"
+        PATH_INTERIM, "tfmsc_aedt_mapping", "tfmsc_aircrafts_v4.xlsx"
     )
     tfmsc_df = pd.read_csv(path_tfmsc)
     tfmsc_aedt_map = pd.read_excel(path_tfmsc_aedt, index_col=0)
@@ -456,12 +500,19 @@ if __name__ == "__main__":
         lambda df: df.facility_type != "HELIPORT"
     ]
     tfmsc_df_ops2019_heli = fill_heli_fleet(tfmsc_df_ops2019)
-
+    assert np.allclose(
+        tfmsc_df_ops2019_heli.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     tfmsc_df_ops2019_com = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Commercial"
     ]
     com_fac = set(
         ops2019.loc[lambda df: df.facility_group == "Commercial", "facility_id"].values
+    )
+    assert np.allclose(
+        tfmsc_df_ops2019_com.groupby("facility_id").fleetmix.sum().values,
+        1
     )
     assert (
         set(tfmsc_df_ops2019_com.facility_id.unique()) == com_fac
@@ -471,6 +522,10 @@ if __name__ == "__main__":
     ]
     rel_fac = set(
         ops2019.loc[lambda df: df.facility_group == "Reliever", "facility_id"].values
+    )
+    assert np.allclose(
+        tfmsc_df_ops2019_rel.groupby("facility_id").fleetmix.sum().values,
+        1
     )
     assert (
         set(tfmsc_df_ops2019_rel.facility_id.unique()) == rel_fac
@@ -486,6 +541,10 @@ if __name__ == "__main__":
             "facility_id",
         ].values
     )
+    assert np.allclose(
+        tfmsc_df_ops2019_tasp_filled.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     assert (
         set(tfmsc_df_ops2019_tasp_filled.facility_id.unique()) == tasp_fac
     ), "Some TASP airports did not get captured. Check data."
@@ -498,6 +557,10 @@ if __name__ == "__main__":
         lambda df: df.facility_group == "Military"
     ]
     tfmsc_df_ops2019_mil_filled = fill_tasp_mil_arpts(tfmsc_df_ops2019_mil)
+    assert np.allclose(
+        tfmsc_df_ops2019_mil_filled.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     tfmsc_df_ops2019_farmranch = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Farm/Ranch"
     ]
@@ -512,10 +575,18 @@ if __name__ == "__main__":
         "function if this assertion is false."
     )
     tfmsc_df_ops2019_farmranch_filled = fill_farm_arpts(tfmsc_df_ops2019_farmranch)
+    assert np.allclose(
+        tfmsc_df_ops2019_farmranch_filled.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     tfmsc_df_ops2019_othpuair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PU_Airports"
     ]
     tfmsc_df_ops2019_othpuair_filled = fill_othpuair_arpts(tfmsc_df_ops2019_othpuair)
+    assert np.allclose(
+        tfmsc_df_ops2019_othpuair_filled.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     tfmsc_df_ops2019_othprair = tfmsc_df_ops2019_arpt.loc[
         lambda df: df.facility_group == "Other_PR_Airports"
     ]
@@ -526,10 +597,15 @@ if __name__ == "__main__":
     tfmsc_df_ops2019_othprair_filled = fill_othprair_arpts(
         tfmsc_df_ops2019_othprair, tfmsc_df_ops2019_othpuair
     )
+    assert np.allclose(
+        tfmsc_df_ops2019_othprair_filled.groupby("facility_id").fleetmix.sum().values,
+        1
+    )
     tfmsc_df_ops2019_heli.facility_group.unique()
     assert set(["Other_PR_Heliports", "Other_PU_Heliports", "Medical"]) not in set(
         tfmsc_df_ops2019_arpt.facility_group.unique()
     ), 'There shouldnt be any airport in "Other_PR_Heliports", "Other_PU_Heliports", "Medical"'
+
     tfmsc_df_ops2019_1 = pd.concat(
         [
             tfmsc_df_ops2019_heli,
@@ -554,8 +630,22 @@ if __name__ == "__main__":
             .values
         )
     ), "Check for na values."
-
-    tfmsc_df_ops2019_grp = tfmsc_df_ops2019_1.groupby("facility_group")
+    assert np.allclose(
+        tfmsc_df_ops2019_1.groupby("facility_id").fleetmix.sum().values,
+        1)
+    engine_map = get_aedt_engine_id_map()
+    tfmsc_df_ops2019_2 = pd.merge(
+        tfmsc_df_ops2019_1,
+        engine_map,
+        on="closest_airframe_id_aedt"
+    )
+    assert np.allclose(
+        tfmsc_df_ops2019_2.groupby("facility_id").fleetmix.sum().values,
+        1)
+    assert (tfmsc_df_ops2019_2.eng_id.isna().sum() == 0), (
+        "Check for missing engine ids."
+    )
+    tfmsc_df_ops2019_grp = tfmsc_df_ops2019_2.groupby("facility_group")
 
     path_fleetmix_clean = Path.home().joinpath(
         PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
@@ -564,3 +654,4 @@ if __name__ == "__main__":
     for shnm, df in tfmsc_df_ops2019_grp:
         df.to_excel(writer, shnm.replace("/", "_"), index=False)
     writer.save()
+

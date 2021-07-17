@@ -218,8 +218,7 @@ if __name__ == "__main__":
     )
 
     taf_ops2019_med_1 = (
-        taf_ops2019_med
-        .assign(sysyear=[range(2011, 2051)]*len(taf_ops2019_med))
+        taf_ops2019_med.assign(sysyear=[range(2011, 2051)] * len(taf_ops2019_med))
         .explode("sysyear")
         .assign(proj_fac=1)
     )
@@ -251,29 +250,33 @@ if __name__ == "__main__":
 
     # Fill 2046 to 2050 projection factors.
     fac_with_46_50_data = taf_df_ops2019_1.loc[
-        lambda df: (df.sysyear == 2046), "facility_id"].values
+        lambda df: (df.sysyear == 2046), "facility_id"
+    ].values
     taf_df_ops2019_46_50_prst = taf_df_ops2019_1.loc[
-        lambda df: (df.facility_id.isin(fac_with_46_50_data))]
+        lambda df: (df.facility_id.isin(fac_with_46_50_data))
+    ]
 
     taf_df_ops_fill_46_50 = taf_df_ops2019_1.loc[
-        lambda df: ~ (df.facility_id.isin(fac_with_46_50_data))]
+        lambda df: ~(df.facility_id.isin(fac_with_46_50_data))
+    ]
     fill_values_46_50 = (
-        taf_df_ops_fill_46_50
-        .loc[lambda df :df.sysyear == 2045]
-        .assign(sysyear=[range(2045, 2051)]*len(taf_df_ops_fill_46_50.facility_id.unique()))
+        taf_df_ops_fill_46_50.loc[lambda df: df.sysyear == 2045]
+        .assign(
+            sysyear=[range(2045, 2051)]
+            * len(taf_df_ops_fill_46_50.facility_id.unique())
+        )
         .explode("sysyear")
     )
 
     filled_values_45_50 = pd.concat(
-        [taf_df_ops_fill_46_50.loc[lambda df :df.sysyear < 2045],
-        fill_values_46_50]
+        [taf_df_ops_fill_46_50.loc[lambda df: df.sysyear < 2045], fill_values_46_50]
     )
 
-    taf_df_ops2019_46_50_all = pd.concat([taf_df_ops2019_46_50_prst,
-                                         filled_values_45_50])
+    taf_df_ops2019_46_50_all = pd.concat(
+        [taf_df_ops2019_46_50_prst, filled_values_45_50]
+    )
 
-    taf_df_ops2019_46_50_all.sort_values(["facility_id", "sysyear"],
-                                         inplace=True)
+    taf_df_ops2019_46_50_all.sort_values(["facility_id", "sysyear"], inplace=True)
 
     assert (
         len(taf_df_ops2019_46_50_all.facility_id.unique()) == 2037
@@ -281,9 +284,9 @@ if __name__ == "__main__":
     assert all(
         np.ravel(~taf_df_ops2019_46_50_all[["proj_fac"]].isna().values)
     ), "Check for na values."
-    assert all((taf_df_ops2019_46_50_all.groupby([
-        "facility_id"]).sysyear.count()
-            == 40).values), ("Check for missing years.")
+    assert all(
+        (taf_df_ops2019_46_50_all.groupby(["facility_id"]).sysyear.count() == 40).values
+    ), "Check for missing years."
 
     taf_df_ops2019_grp = taf_df_ops2019_46_50_all.groupby("facility_group")
 
