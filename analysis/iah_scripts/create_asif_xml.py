@@ -34,14 +34,14 @@ class AsifXml:
         self.heliops = pd.DataFrame
         self.hasheli = False
         self.nm = f"{analysis_arpt_}_2019"
-        self.starttime = "2019-01-01T07:00:00"
+        self.starttime = "2019-01-01T08:00:00"
         self.dur = "24"
         self.taximod = "UserSpecified"
         self.acftPerfModel = "SAE1845"
         self.bankAngle = "true"
         self.description = f"{analysis_arpt_} 2019 Emissions"
         self.layoutname = ""
-        self.case_nm = self.nm + "_case"
+        self.case_nm = self.nm + "_ems"
         self.case_src = "Aircraft"
         self.aputime = str(13.0)
         self.set_tree_trk_layout_ops()

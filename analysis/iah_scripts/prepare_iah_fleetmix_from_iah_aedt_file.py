@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from airportei.utilis import PATH_INTERIM, connect_to_sql_server, get_snake_case_dict
-
+TESTING = True
 if __name__ == "__main__":
     path_imputed_ops = Path.home().joinpath(
         PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
@@ -16,11 +16,16 @@ if __name__ == "__main__":
         PATH_INTERIM, "iah_airport_data", "iah_aedt_study_ops.csv"
     )
     iah_fleetmix = pd.read_csv(path_iah_fleetmix)
+
     iah_fleetmix_1 = (
         iah_fleetmix.rename(columns=get_snake_case_dict(iah_fleetmix))
         .drop(columns="operation_count")
         .assign(annual_operations=iah_ops_2019)
     )
+    if TESTING:
+        iah_fleetmix_1["annual_operations"] = iah_fleetmix["Operation Count"].sum() * 2
+    else:
+        "Do nothing."
 
     conn = connect_to_sql_server(database_nm="FLEET")
     eng_df = pd.read_sql("SELECT * FROM [dbo].[FLT_ENGINES]", conn)
