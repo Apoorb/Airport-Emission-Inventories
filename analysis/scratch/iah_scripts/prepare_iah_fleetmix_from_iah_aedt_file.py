@@ -13,11 +13,11 @@ if __name__ == "__main__":
     iah_ops_2019 = ops2019_com_iah.annual_operations.values[0]
 
     path_iah_fleetmix = Path.home().joinpath(
-        PATH_INTERIM, "iah_airport_data", "iah_aedt_study_ops.csv")
+        PATH_INTERIM, "iah_airport_data", "iah_aedt_study_ops.csv"
+    )
     iah_fleetmix = pd.read_csv(path_iah_fleetmix)
     iah_fleetmix_1 = (
-        iah_fleetmix
-        .rename(columns=get_snake_case_dict(iah_fleetmix))
+        iah_fleetmix.rename(columns=get_snake_case_dict(iah_fleetmix))
         .drop(columns="operation_count")
         .assign(annual_operations=iah_ops_2019)
     )
@@ -32,15 +32,13 @@ if __name__ == "__main__":
         .rename(columns={"engine_code": "engine"})
         .filter(items=["engine_id", "engine"])
     )
-    assert eng_df_1.duplicated("engine_id").sum() == 0, (
-        "Duplicated engine_id!")
+    assert eng_df_1.duplicated("engine_id").sum() == 0, "Duplicated engine_id!"
     airfm_df_1 = (
         airfm_df.rename(columns=get_snake_case_dict(airfm_df))
         .filter(items=["airframe_id", "model"])
         .rename(columns={"model": "airframe"})
     )
-    assert airfm_df_1.duplicated("airframe_id").sum() == 0, (
-        "Duplicated airframes!")
+    assert airfm_df_1.duplicated("airframe_id").sum() == 0, "Duplicated airframes!"
 
     equip_db_fil = (
         equip_db.rename(columns=get_snake_case_dict(equip_db))
@@ -57,19 +55,20 @@ if __name__ == "__main__":
     )
 
     iah_fleetmix_2 = (
-        iah_fleetmix_1
-        .merge(airfm_df_1, on="airframe", how="left")
+        iah_fleetmix_1.merge(airfm_df_1, on="airframe", how="left")
         .merge(eng_df_1, on="engine", how="left")
         .merge(equip_db_fil, on=["airframe_id", "engine_id"], how="left")
     )
 
-    assert all(((~ iah_fleetmix_2.anp_airplane_id.isna())
-     | (~ iah_fleetmix_2.anp_helicopter_id.isna())
-     )), ("Missing ANP ids. Can't assign profiles to non-anp crafts.")
+    assert all(
+        (
+            (~iah_fleetmix_2.anp_airplane_id.isna())
+            | (~iah_fleetmix_2.anp_helicopter_id.isna())
+        )
+    ), "Missing ANP ids. Can't assign profiles to non-anp crafts."
 
     iah_fleetmix_3 = (
-        iah_fleetmix_2
-        .rename(columns={"airframe_id": "closest_airframe_id_aedt"})
+        iah_fleetmix_2.rename(columns={"airframe_id": "closest_airframe_id_aedt"})
         .assign(facility_id="iah")
         .filter(
             items=[
@@ -79,18 +78,13 @@ if __name__ == "__main__":
                 "closest_airframe_id_aedt",
                 "engine_id",
                 "anp_airplane_id",
-                "anp_helicopter_id"
+                "anp_helicopter_id",
             ]
         )
     )
 
     path_iah_fleetmix_cln = Path.home().joinpath(
-        PATH_INTERIM, "iah_airport_data", "iah_aedt_study_ops_cln.csv")
+        PATH_INTERIM, "iah_airport_data", "iah_aedt_study_ops_cln.csv"
+    )
 
     iah_fleetmix_3.to_csv(path_iah_fleetmix_cln, index=False)
-
-
-
-
-
-

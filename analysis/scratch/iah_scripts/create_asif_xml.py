@@ -12,10 +12,11 @@ DEFAULT_APU_TIME = 13.0
 
 class AsifXml:
     def __init__(
-            self,
-            path_inputs_: pathlib.WindowsPath,
-            path_xml_templ_: pathlib.WindowsPath,
-            analysis_arpt_: str):
+        self,
+        path_inputs_: pathlib.WindowsPath,
+        path_xml_templ_: pathlib.WindowsPath,
+        analysis_arpt_: str,
+    ):
         self.path_inputs = path_inputs_
         self.path_xml_templ = path_xml_templ_
         self.analysis_arpt = analysis_arpt_
@@ -51,9 +52,11 @@ class AsifXml:
         self.asif_rt = self.asif_tre.getroot()
         self.elem_before_trackopset = self.asif_tre.find(".//case//duration")
         self.asif_trackopset_a = self.asif_rt.xpath(
-            ".//optype[text()='A']/ancestor::trackOpSet")[0]
+            ".//optype[text()='A']/ancestor::trackOpSet"
+        )[0]
         self.asif_trackopset_d = self.asif_rt.xpath(
-            ".//optype[text()='D']/ancestor::trackOpSet")[0]
+            ".//optype[text()='D']/ancestor::trackOpSet"
+        )[0]
         self.asif_trackopset_dict = {
             "A": self.asif_trackopset_a,
             "D": self.asif_trackopset_d,
@@ -64,18 +67,19 @@ class AsifXml:
         self.trk = x_asif_in.parse("track", index_col=0)
         self.flt = x_asif_in.parse("fleet", index_col=0)
         self.flt = (
-            self.flt
-            .sort_values(["ltos", "arfm_mod", "engine_code", "op_type"],
-                             ascending=[False, True, True, True])
+            self.flt.sort_values(
+                ["ltos", "arfm_mod", "engine_code", "op_type"],
+                ascending=[False, True, True, True],
+            )
             .reset_index(drop=True)
             .assign(ids=lambda df: (np.floor(df.index / 2) + 1).astype(int))
         )
-        self.heliops = self.flt.loc[lambda df: ~ df.anp_helicopter_id.isna()]
+        self.heliops = self.flt.loc[lambda df: ~df.anp_helicopter_id.isna()]
         self.acftops = self.flt.loc[lambda df: df.anp_helicopter_id.isna()]
         if len(self.heliops) != 0:
             self.hasheli = True
 
-    def set_scn_meta(self, ) -> None:
+    def set_scn_meta(self,) -> None:
         scn_attr = {
             "name": self.nm,
             "startTime": self.starttime,
@@ -95,18 +99,19 @@ class AsifXml:
             "case//name": self.case_nm,
             "case//source": self.case_src,
             "case//startTime": self.starttime,
-            "case//duration": self.dur
+            "case//duration": self.dur,
         }
         for key, val in case_meta_attr.items():
             self.asif_tre.find(f".//{key}").text = val
 
     def set_trackopsets(self) -> None:
-        self.asif_trackopset_dict["A"].getparent().remove(self.asif_trackopset_dict["A"])
-        self.asif_trackopset_dict["D"].getparent().remove(self.asif_trackopset_dict["D"])
-        aircraft_types = {
-            "aircraft": 0,
-            "helicopter": 1
-        }
+        self.asif_trackopset_dict["A"].getparent().remove(
+            self.asif_trackopset_dict["A"]
+        )
+        self.asif_trackopset_dict["D"].getparent().remove(
+            self.asif_trackopset_dict["D"]
+        )
+        aircraft_types = {"aircraft": 0, "helicopter": 1}
         for aircraft_type in aircraft_types.values():
             if (aircraft_type == 1) and (not self.hasheli):
                 continue
@@ -117,42 +122,44 @@ class AsifXml:
                     ops = self.heliops
                 else:
                     raise ValueError("aircraft_type should be either 0 or 1.")
-                ops_fil = (
-                    ops.loc[lambda df: (df.op_type == op_type)]
-                )
-                trk_fil = self.trk.loc[lambda df: (df.aircraft_type ==
-                                              aircraft_type) & (df.op_type == op_type)]
+                ops_fil = ops.loc[lambda df: (df.op_type == op_type)]
+                trk_fil = self.trk.loc[
+                    lambda df: (df.aircraft_type == aircraft_type)
+                    & (df.op_type == op_type)
+                ]
                 asif_trackopset_dcpy = deepcopy(self.asif_trackopset_dict[op_type])
-                self.set_track(trk_fil_=trk_fil,
-                               asif_trackopset_dcpy_=asif_trackopset_dcpy)
-                self.set_ops(op_type_=op_type,
+                self.set_track(
+                    trk_fil_=trk_fil, asif_trackopset_dcpy_=asif_trackopset_dcpy
+                )
+                self.set_ops(
+                    op_type_=op_type,
                     ops_fil_=ops_fil,
-                             trk_fil_=trk_fil,
-                             asif_trackopset_dcpy_=asif_trackopset_dcpy)
+                    trk_fil_=trk_fil,
+                    asif_trackopset_dcpy_=asif_trackopset_dcpy,
+                )
                 self.elem_before_trackopset.addnext(asif_trackopset_dcpy)
                 self.set_annualization()
 
-
     def set_track(
-            self,
-            trk_fil_: pd.DataFrame,
-            asif_trackopset_dcpy_: lxml.etree._Element) -> None:
+        self, trk_fil_: pd.DataFrame, asif_trackopset_dcpy_: lxml.etree._Element
+    ) -> None:
         asif_trackopset_dcpy_.find(".//name").text = trk_fil_.track_name.values[0]
         asif_trackopset_dcpy_.find(".//optype").text = trk_fil_.op_type.values[0]
         asif_trackopset_dcpy_.find(".//airport").text = self.analysis_arpt
         asif_trackopset_dcpy_.find(".//runway").text = trk_fil_.rwy_end_name.values[0]
         asif_trackopset_dcpy_.find(".//type").text = trk_fil_.segment_type.values[0]
-        asif_trackopset_dcpy_.find(".//distance").text = str(trk_fil_.dist_or_rad.values[0])
-        assert trk_fil_.turn_angle.values[0] == 0, (
-            "Handle non-zero turn "
-            "angle.")
+        asif_trackopset_dcpy_.find(".//distance").text = str(
+            trk_fil_.dist_or_rad.values[0]
+        )
+        assert trk_fil_.turn_angle.values[0] == 0, "Handle non-zero turn " "angle."
 
     def set_ops(
-            self,
-            op_type_: str,
-            ops_fil_: pd.DataFrame,
-            trk_fil_: pd.DataFrame,
-            asif_trackopset_dcpy_: lxml.etree._Element) -> None:
+        self,
+        op_type_: str,
+        ops_fil_: pd.DataFrame,
+        trk_fil_: pd.DataFrame,
+        asif_trackopset_dcpy_: lxml.etree._Element,
+    ) -> None:
         asif_ops = asif_trackopset_dcpy_.find(".//operations")
         asif_op = asif_trackopset_dcpy_.find(".//operation")
         asif_op_dcpy = deepcopy(asif_op)
@@ -179,20 +186,24 @@ class AsifXml:
             else:
                 asif_op_dcpy_dcpy.find(".//apuName").text = row.apu_name
                 if op_type_ == "A":
-                    asif_op_dcpy_dcpy.find(".//arrivalApuTime").text = str(
-                        self.aputime)
+                    asif_op_dcpy_dcpy.find(".//arrivalApuTime").text = str(self.aputime)
                 else:
                     asif_op_dcpy_dcpy.find(".//departureApuTime").text = str(
-                        self.aputime)
+                        self.aputime
+                    )
             asif_op_dcpy_dcpy.find(".//numOperations").text = str(row.ltos)
             asif_op_dcpy_dcpy.find(".//opType").text = row.op_type
             if op_type_ == "A":
                 asif_op_dcpy_dcpy.find(".//arrivalAirport").text = self.analysis_arpt
-                asif_op_dcpy_dcpy.find(".//arrivalRunway").text = trk_fil_.rwy_end_name.values[0]
+                asif_op_dcpy_dcpy.find(
+                    ".//arrivalRunway"
+                ).text = trk_fil_.rwy_end_name.values[0]
                 asif_op_dcpy_dcpy.find(".//onTime").text = self.starttime
             else:
                 asif_op_dcpy_dcpy.find(".//departureAirport").text = self.analysis_arpt
-                asif_op_dcpy_dcpy.find(".//departureRunway").text = trk_fil_.rwy_end_name.values[0]
+                asif_op_dcpy_dcpy.find(
+                    ".//departureRunway"
+                ).text = trk_fil_.rwy_end_name.values[0]
                 asif_op_dcpy_dcpy.find(".//offTime").text = self.starttime
             asif_op_dcpy_dcpy.find(".//saeProfile").text = row.profile
             asif_op_dcpy_dcpy.find(".//stageLength").text = str(row.stage_len)
@@ -206,26 +217,25 @@ class AsifXml:
         self.asif_tre.write(str(path_out), pretty_print=True)
         ...
 
-    def getasifxml(self, path_inputs: str, path_xmltempl: str
-                   ) -> etree._ElementTree:
+    def getasifxml(self, path_inputs: str, path_xmltempl: str) -> etree._ElementTree:
         ...
 
 
 if __name__ == "__main__":
     analysis_arpt = "KIAH"
-    path_xml_temp = Path.home().joinpath(PATH_INTERIM,
-                                         "template_asif_scenario.xml")
-    iah_asif_input_fi = Path.home().joinpath(PATH_INTERIM,
-                                             "iah_asif_input.xlsx")
+    path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
+    iah_asif_input_fi = Path.home().joinpath(PATH_INTERIM, "iah_asif_input.xlsx")
     path_asif_out = Path.home().joinpath(
-        PATH_INTERIM, "asif_xmls", "test_kiah_asif.xml")
-    asifxml_obj = AsifXml(path_inputs_=iah_asif_input_fi,
-                          path_xml_templ_=path_xml_temp,
-                          analysis_arpt_=analysis_arpt)
+        PATH_INTERIM, "asif_xmls", "test_kiah_asif.xml"
+    )
+    asifxml_obj = AsifXml(
+        path_inputs_=iah_asif_input_fi,
+        path_xml_templ_=path_xml_temp,
+        analysis_arpt_=analysis_arpt,
+    )
     asifxml_obj.set_tree_trk_layout_ops()
     asifxml_obj.set_scn_meta()
     asifxml_obj.set_case_meta()
     asifxml_obj.set_trackopsets()
     asifxml_obj.set_annualization()
     asifxml_obj.write_asif(path_out=path_asif_out)
-

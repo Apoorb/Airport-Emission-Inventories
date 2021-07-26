@@ -20,8 +20,7 @@ cur.execute(
 )
 conn.close()
 quoted = urllib.parse.quote_plus(
-    "DRIVER={SQL Server};SERVER=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;DATABASE"
-    "=dfw_study"
+    "DRIVER={SQL Server};SERVER=HMP-HVT3G63-LW0\SQLEXPRESS_AEDT;DATABASE" "=dfw_study"
 )
 engine = create_engine("mssql+pyodbc:///?odbc_connect={}".format(quoted))
 
