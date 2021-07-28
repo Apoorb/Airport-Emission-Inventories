@@ -633,8 +633,58 @@ if __name__ == "__main__":
         tfmsc_df_ops2019_1.groupby("facility_id").fleetmix.sum().values, 1
     )
     engine_map = get_aedt_engine_id_map()
-    tfmsc_df_ops2019_2 = pd.merge(
-        tfmsc_df_ops2019_1, engine_map, on="closest_airframe_id_aedt"
+    tfmsc_df_ops2019_2 = (
+        pd.merge(tfmsc_df_ops2019_1, engine_map, on="closest_airframe_id_aedt")
+        .sort_values(
+            [
+                "facility_group",
+                "facility_name",
+                "fleetmix",
+                "aircraft_type",
+                "engine_mod_id",
+            ],
+            ascending=[True, True, False, True, True],
+        )
+        .filter(
+            items=[
+                "county_arpt",
+                "district_tx_boundar",
+                "fips_tx_boundar",
+                "facility_id",
+                "facility_name",
+                "facility_group",
+                "facility_type",
+                "annual_operations",
+                "medical_use",
+                "military_joint_use",
+                "otherservices",
+                "fuel_types",
+                "ownership",
+                "used",
+                "year_id",
+                "airport",
+                "total_ops_by_craft",
+                "engine_type",
+                "aircraft_id_and_type",
+                "aircraft_id_and_type_cor",
+                "total_ops_by_arpt",
+                "aircraft_id",
+                "closest_airframe_id_aedt",
+                "aircraft_type",
+                "aircraft_type_id",
+                "closest_airframe_type_aedt",
+                "airframe_id",
+                "engine_id",
+                "fleetmix",
+                "engine_mod_id",
+                "anp_airplane_id",
+                "anp_helicopter_id",
+                "bada_id",
+                "bada4_id" "ops_diff",
+                "ops_per_diff",
+                "filled_from_facility_id",
+            ]
+        )
     )
     assert len(tfmsc_df_ops2019_2) == len(tfmsc_df_ops2019_1)
     assert np.allclose(

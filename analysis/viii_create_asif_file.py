@@ -29,7 +29,7 @@ class AsifXml:
         self.asif_annualzn = lxml.etree._Element()
         self.trk = pd.DataFrame
         self.layout = pd.DataFrame
-        self.flt = pd.DataFrame
+        self.ltos = pd.DataFrame
         self.acftops = pd.DataFrame
         self.heliops = pd.DataFrame
         self.hasheli = False
@@ -65,17 +65,17 @@ class AsifXml:
         x_asif_in = pd.ExcelFile(self.path_inputs)
         self.layout = x_asif_in.parse("layout", index_col=0)
         self.trk = x_asif_in.parse("track", index_col=0)
-        self.flt = x_asif_in.parse("fleet", index_col=0)
-        self.flt = (
-            self.flt.sort_values(
+        self.ltos = x_asif_in.parse("ltos", index_col=0)
+        self.ltos = (
+            self.ltos.sort_values(
                 ["ltos", "arfm_mod", "engine_code", "op_type"],
                 ascending=[False, True, True, True],
             )
             .reset_index(drop=True)
             .assign(ids=lambda df: (np.floor(df.index / 2) + 1).astype(int))
         )
-        self.heliops = self.flt.loc[lambda df: ~df.anp_helicopter_id.isna()]
-        self.acftops = self.flt.loc[lambda df: df.anp_helicopter_id.isna()]
+        self.heliops = self.ltos.loc[lambda df: ~df.anp_helicopter_id.isna()]
+        self.acftops = self.ltos.loc[lambda df: df.anp_helicopter_id.isna()]
         if len(self.heliops) != 0:
             self.hasheli = True
 
@@ -146,7 +146,9 @@ class AsifXml:
         asif_trackopset_dcpy_.find(".//name").text = trk_fil_.track_name.values[0]
         asif_trackopset_dcpy_.find(".//optype").text = trk_fil_.op_type.values[0]
         asif_trackopset_dcpy_.find(".//airport").text = self.analysis_arpt
-        asif_trackopset_dcpy_.find(".//runway").text = trk_fil_.rwy_end_name.values[0]
+        asif_trackopset_dcpy_.find(".//runway").text = str(
+            trk_fil_.rwy_end_name.values[0]
+        )
         asif_trackopset_dcpy_.find(".//type").text = trk_fil_.segment_type.values[0]
         asif_trackopset_dcpy_.find(".//distance").text = str(
             trk_fil_.dist_or_rad.values[0]
@@ -195,15 +197,15 @@ class AsifXml:
             asif_op_dcpy_dcpy.find(".//opType").text = row.op_type
             if op_type_ == "A":
                 asif_op_dcpy_dcpy.find(".//arrivalAirport").text = self.analysis_arpt
-                asif_op_dcpy_dcpy.find(
-                    ".//arrivalRunway"
-                ).text = trk_fil_.rwy_end_name.values[0]
+                asif_op_dcpy_dcpy.find(".//arrivalRunway").text = str(
+                    trk_fil_.rwy_end_name.values[0]
+                )
                 asif_op_dcpy_dcpy.find(".//onTime").text = self.starttime
             else:
                 asif_op_dcpy_dcpy.find(".//departureAirport").text = self.analysis_arpt
-                asif_op_dcpy_dcpy.find(
-                    ".//departureRunway"
-                ).text = trk_fil_.rwy_end_name.values[0]
+                asif_op_dcpy_dcpy.find(".//departureRunway").text = str(
+                    trk_fil_.rwy_end_name.values[0]
+                )
                 asif_op_dcpy_dcpy.find(".//offTime").text = self.starttime
             asif_op_dcpy_dcpy.find(".//saeProfile").text = row.profile
             asif_op_dcpy_dcpy.find(".//stageLength").text = str(row.stage_len)
@@ -222,14 +224,19 @@ class AsifXml:
 
 
 if __name__ == "__main__":
+    analysis_arpt = "KELP"
     analysis_arpt = "KIAH"
+    fac_id = "elp"
+    fac_id = "iah"
     path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
-    iah_asif_input_fi = Path.home().joinpath(PATH_INTERIM, "iah_asif_input.xlsx")
+    asif_input_fi = Path.home().joinpath(
+        PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
+    )
     path_asif_out = Path.home().joinpath(
-        PATH_INTERIM, "asif_xmls", "test_kiah_asif.xml"
+        PATH_INTERIM, "asif_xmls", "test_{}_asif.xml".format(analysis_arpt.lower())
     )
     asifxml_obj = AsifXml(
-        path_inputs_=iah_asif_input_fi,
+        path_inputs_=asif_input_fi,
         path_xml_templ_=path_xml_temp,
         analysis_arpt_=analysis_arpt,
     )
