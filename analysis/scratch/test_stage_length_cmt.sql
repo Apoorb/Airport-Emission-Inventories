@@ -9,7 +9,7 @@ SELECT *
   ON [FLEET].[dbo].[FLT_EQUIPMENT].[AIRFRAME_ID] = [FLEET].[dbo].[FLT_AIRFRAMES].[AIRFRAME_ID] 
   JOIN  (SELECT [ENGINE_ID], [MODEL] AS [engine],[RATED_OUT],[UA_RWF_TO],[UA_RWF_CO],[UA_RWF_AP],[UA_RWF_ID] FROM [FLEET].[dbo].[FLT_ENGINES]) b
   ON [FLEET].[dbo].[FLT_EQUIPMENT].[ENGINE_ID] = b.[ENGINE_ID] 
-  WHERE [MODEL] like ('%Cessna 182%') AND [engine] like ('%%') AND [PROF_ID1] = 'STANDARD' AND [OP_TYPE] = 'D'
+  WHERE [MODEL] like ('%SMR100%') AND [engine] like ('%%') AND [PROF_ID1] = 'STANDARD' AND [OP_TYPE] = 'D'
   ORDER BY [PROF_ID2] DESC 
   ;
 

@@ -8,7 +8,7 @@ import pathlib
 from pathlib import Path
 from airportei.utilis import PATH_INTERIM, connect_to_sql_server, get_snake_case_dict
 
-TESTING = True
+TESTING = False
 
 
 def clean_profiles(
@@ -304,10 +304,7 @@ def get_asif_input_tab():
 
 if __name__ == "__main__":
     fac_id = "elp"
-    fac_id = "iah"
     arpt_db = "elp_dummy"
-    arpt_db = "get_iah_tracks"
-    # 1. Get operations and Fleetmix for IAH
     path_imputed_ops = Path.home().joinpath(
         PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
     )

@@ -225,9 +225,7 @@ class AsifXml:
 
 if __name__ == "__main__":
     analysis_arpt = "KELP"
-    analysis_arpt = "KIAH"
     fac_id = "elp"
-    fac_id = "iah"
     path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
     asif_input_fi = Path.home().joinpath(
         PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
