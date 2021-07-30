@@ -15,11 +15,9 @@ class AsifXml:
         self,
         path_inputs_: pathlib.WindowsPath,
         path_xml_templ_: pathlib.WindowsPath,
-        analysis_arpt_: str,
     ):
         self.path_inputs = path_inputs_
         self.path_xml_templ = path_xml_templ_
-        self.analysis_arpt = analysis_arpt_
         self.asif_tre = lxml.etree._ElementTree()
         self.asif_rt = lxml.etree._Element()
         self.elem_before_trackopset = lxml.etree._Element()
@@ -33,18 +31,20 @@ class AsifXml:
         self.acftops = pd.DataFrame
         self.heliops = pd.DataFrame
         self.hasheli = False
-        self.nm = f"{analysis_arpt_}_2019"
+        self.set_tree_trk_layout_ops()
+        self.analysis_arpt = self.layout.apt_code.values[0]
+        self.nm = f"{self.analysis_arpt}_2019"
         self.starttime = "2019-01-01T08:00:00"
         self.dur = "24"
         self.taximod = "UserSpecified"
         self.acftPerfModel = "SAE1845"
         self.bankAngle = "true"
-        self.description = f"{analysis_arpt_} 2019 Emissions"
+        self.description = f"{self.analysis_arpt} 2019 Emissions"
         self.layoutname = ""
         self.case_nm = self.nm + "_ems"
         self.case_src = "Aircraft"
         self.aputime = str(13.0)
-        self.set_tree_trk_layout_ops()
+
 
     def set_tree_trk_layout_ops(self) -> None:
         parser = etree.XMLParser(remove_blank_text=True)
@@ -224,23 +224,27 @@ class AsifXml:
 
 
 if __name__ == "__main__":
-    analysis_arpt = "KELP"
     fac_id = "elp"
-    path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
-    asif_input_fi = Path.home().joinpath(
-        PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
-    )
-    path_asif_out = Path.home().joinpath(
-        PATH_INTERIM, "asif_xmls", "test_{}_asif.xml".format(analysis_arpt.lower())
-    )
-    asifxml_obj = AsifXml(
-        path_inputs_=asif_input_fi,
-        path_xml_templ_=path_xml_temp,
-        analysis_arpt_=analysis_arpt,
-    )
-    asifxml_obj.set_tree_trk_layout_ops()
-    asifxml_obj.set_scn_meta()
-    asifxml_obj.set_case_meta()
-    asifxml_obj.set_trackopsets()
-    asifxml_obj.set_annualization()
-    asifxml_obj.write_asif(path_out=path_asif_out)
+    fac_ids = ["elp", "dfw"]
+
+    fac_ids = ["act"]
+    for fac_id in fac_ids:
+        path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
+        asif_input_fi = Path.home().joinpath(
+            PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
+        )
+        asifxml_obj = AsifXml(
+            path_inputs_=asif_input_fi,
+            path_xml_templ_=path_xml_temp,
+        )
+
+        path_asif_out = Path.home().joinpath(
+            PATH_INTERIM, "asif_xmls", "{}_scn_asif.xml".format(
+                asifxml_obj.analysis_arpt.lower())
+        )
+        asifxml_obj.set_tree_trk_layout_ops()
+        asifxml_obj.set_scn_meta()
+        asifxml_obj.set_case_meta()
+        asifxml_obj.set_trackopsets()
+        asifxml_obj.set_annualization()
+        asifxml_obj.write_asif(path_out=path_asif_out)
