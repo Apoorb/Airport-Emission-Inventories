@@ -2,6 +2,8 @@
 Get operations by airframe and engine code for the analysis airport along
 with auxiliary inputs like the APU name, profile, layout, and track.
 """
+from datetime import datetime
+
 import pandas as pd
 import numpy as np
 import pathlib
@@ -138,9 +140,15 @@ def get_arptdummy_trks_layout(
     runway = pd.read_sql("SELECT * FROM [dbo].[APT_RWY_END]", conn)
     arpt_layout = pd.read_sql("SELECT * FROM [dbo].[AIRPORT_LAYOUT]", conn)
     arpt_code = pd.read_sql("SELECT * FROM [dbo].[APT_CODE]", conn)
+    arpt_main = pd.read_sql("SELECT * FROM [dbo].[APT_MAIN]", conn)
 
+    lam_date = lambda df: (
+        (df.eff_date < datetime.strptime("1-1-2019", "%m-%d-%Y"))
+        & (df.exp_date > datetime.strptime("1-1-2019", "%m-%d-%Y"))
+    )
     tracks_1 = (
         tracks.rename(columns=get_snake_case_dict(tracks))
+        .loc[lam_date]
         .filter(
             items=["aircraft_type", "track_id", "rwy_end_id", "track_name", "op_type"]
         )
@@ -148,9 +156,9 @@ def get_arptdummy_trks_layout(
         .apply(lambda df: df[df.track_id == df.track_id.min()])
         .reset_index(drop=True)
     )
-    subtracks_1 = subtracks.rename(
-        columns=get_snake_case_dict(subtracks)
-    ).filter(items=["subtrack_id", "track_id", "subtrack_num"])
+    subtracks_1 = subtracks.rename(columns=get_snake_case_dict(subtracks)).filter(
+        items=["subtrack_id", "track_id", "subtrack_num"]
+    )
     segments_1 = (
         segments.rename(columns=get_snake_case_dict(segments))
         .filter(
@@ -177,10 +185,18 @@ def get_arptdummy_trks_layout(
     arpt_code_1 = (
         arpt_code.rename(columns=get_snake_case_dict(arpt_code))
         .loc[lambda df: df.preferred.str.lower() == "y"]
+        .drop(columns=["rec_id", "eff_date", "exp_date"])
     )
-    arpt_layout_fin = arpt_layout.rename(
-        columns=get_snake_case_dict(arpt_layout)
-    ).merge(arpt_code_1, left_on="airport_id",  right_on="apt_id")
+    arpt_main_1 = arpt_main.rename(columns=get_snake_case_dict(arpt_main)).drop(
+        columns=["rec_id", "eff_date", "exp_date"]
+    )
+
+    arpt_layout_1 = arpt_layout.rename(columns=get_snake_case_dict(arpt_layout))
+    arpt_layout_fin = (
+        arpt_layout_1.loc[lam_date]
+        .merge(arpt_code_1, left_on="airport_id", right_on="apt_id")
+        .merge(arpt_main_1, on="apt_id")
+    )
     assert len(arpt_layout_fin) == 1, "Handle multiple layouts."
 
     return dict(track=tracks_fin, layout=arpt_layout_fin)
@@ -198,8 +214,8 @@ def ops_prep(
     annual_ops_2019 = ops2019_fgrp_fid.annual_operations.values[0]
     ops_ = clean_fleetmix(path_fltmix_=path_fltmix_, ops_grp=ops_grp, fac_id=fac_id)
     if not TESTING:
-        assert (
-            np.isclose(annual_ops_2019, ops_.ops_fleet.sum())
+        assert np.isclose(
+            annual_ops_2019, ops_.ops_fleet.sum()
         ), "Total ops do not match between fleetmix and operations data."
     return ops_, annual_ops_2019
 
@@ -298,6 +314,15 @@ def split_ops_arrdep(
     ops_airfm_eng_apu_prf_["ltos"] = (
         ops_airfm_eng_apu_prf_.ops_fleet_adj / ops_airfm_eng_apu_prf_.op_counts
     ).round(0)
+    ops_airfm_eng_apu_prf_ = (
+        ops_airfm_eng_apu_prf_.sort_values(
+            ["ltos", "arfm_mod", "engine_code", "op_type"],
+            ascending=[False, True, True, True],
+        )
+        .reset_index(drop=True)
+        .assign(ids=lambda df: (np.floor(df.index / 2) + 1).astype(int))
+    )
+
     assert np.isclose(
         ops_airfm_eng_apu_prf_.ltos.sum(), annual_ops_, rtol=0.1
     ), "All operations are not correctly reassigned."
@@ -324,11 +349,11 @@ if __name__ == "__main__":
             PATH_INTERIM, "harris_airport_data", "iah_aedt_study_ops_cln.xlsx"
         )
 
-    path_fleetmixes = [path_fleetmix_clean, path_dfw_fleetmix_cln]
-    fac_ids = ["elp", "dfw"]
+    fac_ids = ["aus", "abi", "act", "ama", "elp", "dfw", "bpt"]
+    path_fleetmixes = [path_fleetmix_clean] * 5 + [path_dfw_fleetmix_cln]
 
     path_fleetmixes = [path_fleetmix_clean]
-    fac_ids = ["ama"]
+    fac_ids = ["bro"]
 
     for path_fleetmix_clean, fac_id in zip(path_fleetmixes, fac_ids):
         arpt_db = f"{fac_id}_dummy"
@@ -352,9 +377,10 @@ if __name__ == "__main__":
         missing_deleted_rows = ops_airfm_eng_apu_dict["missing_rows"]
         with pd.option_context("display.max_rows", 20, "display.max_columns", 20):
             print(missing_deleted_rows)
-        input("Are we okay with the deleted rows?")
+        # input("Are we okay with the deleted rows?")
         ltos_airfm_eng_apu_prf = split_ops_arrdep(
-            ops_airfm_eng_apu_prf_=ops_airfm_eng_apu_dict["data"], annual_ops_=annual_ops
+            ops_airfm_eng_apu_prf_=ops_airfm_eng_apu_dict["data"],
+            annual_ops_=annual_ops,
         )
         trk_layout_dict = get_arptdummy_trks_layout(arptdummy_db=arpt_db)
 

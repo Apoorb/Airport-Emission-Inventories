@@ -17,13 +17,14 @@ if __name__ == "__main__":
         PATH_INTERIM, "dfw_reported_data", "dfw_aedt_ops.csv"
     )
     dfw_fleetmix = pd.read_csv(path_dfw_fleetmix)
-    dfw_fleetmix['Operation Count'].sum()
+    dfw_fleetmix["Operation Count"].sum()
 
     dfw_fleetmix_1 = (
         dfw_fleetmix.rename(columns=get_snake_case_dict(dfw_fleetmix))
-        .groupby(["airframe", "engine"]).operation_count.sum().reset_index()
-        .assign(fleetmix=lambda df: df.operation_count /
-                                    df.operation_count.sum())
+        .groupby(["airframe", "engine"])
+        .operation_count.sum()
+        .reset_index()
+        .assign(fleetmix=lambda df: df.operation_count / df.operation_count.sum())
         .drop(columns="operation_count")
         .assign(annual_operations=dfw_ops_2019)
     )
@@ -94,5 +95,4 @@ if __name__ == "__main__":
         PATH_INTERIM, "dfw_reported_data", "dfw_aedt_study_ops_cln.xlsx"
     )
 
-    dfw_fleetmix_3.to_excel(path_dfw_fleetmix_cln, index=False,
-                            sheet_name="Commercial")
+    dfw_fleetmix_3.to_excel(path_dfw_fleetmix_cln, index=False, sheet_name="Commercial")

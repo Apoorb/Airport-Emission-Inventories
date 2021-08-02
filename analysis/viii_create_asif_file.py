@@ -12,9 +12,7 @@ DEFAULT_APU_TIME = 13.0
 
 class AsifXml:
     def __init__(
-        self,
-        path_inputs_: pathlib.WindowsPath,
-        path_xml_templ_: pathlib.WindowsPath,
+        self, path_inputs_: pathlib.WindowsPath, path_xml_templ_: pathlib.WindowsPath
     ):
         self.path_inputs = path_inputs_
         self.path_xml_templ = path_xml_templ_
@@ -45,7 +43,6 @@ class AsifXml:
         self.case_src = "Aircraft"
         self.aputime = str(13.0)
 
-
     def set_tree_trk_layout_ops(self) -> None:
         parser = etree.XMLParser(remove_blank_text=True)
         self.asif_tre = etree.parse(str(self.path_xml_templ), parser)
@@ -66,14 +63,6 @@ class AsifXml:
         self.layout = x_asif_in.parse("layout", index_col=0)
         self.trk = x_asif_in.parse("track", index_col=0)
         self.ltos = x_asif_in.parse("ltos", index_col=0)
-        self.ltos = (
-            self.ltos.sort_values(
-                ["ltos", "arfm_mod", "engine_code", "op_type"],
-                ascending=[False, True, True, True],
-            )
-            .reset_index(drop=True)
-            .assign(ids=lambda df: (np.floor(df.index / 2) + 1).astype(int))
-        )
         self.heliops = self.ltos.loc[lambda df: ~df.anp_helicopter_id.isna()]
         self.acftops = self.ltos.loc[lambda df: df.anp_helicopter_id.isna()]
         if len(self.heliops) != 0:
@@ -225,22 +214,20 @@ class AsifXml:
 
 if __name__ == "__main__":
     fac_id = "elp"
-    fac_ids = ["elp", "dfw"]
+    fac_ids = ["aus", "abi", "act", "ama", "elp", "dfw", "bpt"]
 
-    fac_ids = ["act"]
+    fac_ids = ["bro"]
     for fac_id in fac_ids:
         path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
         asif_input_fi = Path.home().joinpath(
             PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
         )
-        asifxml_obj = AsifXml(
-            path_inputs_=asif_input_fi,
-            path_xml_templ_=path_xml_temp,
-        )
+        asifxml_obj = AsifXml(path_inputs_=asif_input_fi, path_xml_templ_=path_xml_temp)
 
         path_asif_out = Path.home().joinpath(
-            PATH_INTERIM, "asif_xmls", "{}_scn_asif.xml".format(
-                asifxml_obj.analysis_arpt.lower())
+            PATH_INTERIM,
+            "asif_xmls",
+            "{}_scn_asif.xml".format(asifxml_obj.analysis_arpt.lower()),
         )
         asifxml_obj.set_tree_trk_layout_ops()
         asifxml_obj.set_scn_meta()
