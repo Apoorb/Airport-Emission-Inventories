@@ -349,11 +349,35 @@ if __name__ == "__main__":
             PATH_INTERIM, "harris_airport_data", "iah_aedt_study_ops_cln.xlsx"
         )
 
-    fac_ids = ["aus", "abi", "act", "ama", "elp", "dfw", "bpt"]
+    fac_ids = [
+        "aus",
+        "abi",
+        "act",
+        "ama",
+        "elp",
+        "dfw",
+        "bpt",
+        "bro",
+        "cll",
+        "crp",
+        "dal",
+        "drt",
+        "ggg",
+        "hrl",
+        "ile",
+        "lbb",
+        "lrd",
+        "maf",
+        "mfe",
+        "sat",
+        "sjt",
+        "sps",
+        "tyr",
+    ]
     path_fleetmixes = [path_fleetmix_clean] * 5 + [path_dfw_fleetmix_cln]
 
     path_fleetmixes = [path_fleetmix_clean]
-    fac_ids = ["bro"]
+    fac_ids = ["vct"]
 
     for path_fleetmix_clean, fac_id in zip(path_fleetmixes, fac_ids):
         arpt_db = f"{fac_id}_dummy"
