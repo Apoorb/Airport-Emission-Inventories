@@ -349,43 +349,80 @@ if __name__ == "__main__":
             PATH_INTERIM, "harris_airport_data", "iah_aedt_study_ops_cln.xlsx"
         )
 
+    # Commercial Airports
+    # fac_ids = [
+    #     "dfw",
+    #     "aus",
+    #     "abi",
+    #     "act",
+    #     "ama",
+    #     "elp",
+    #     "bpt",
+    #     "bro",
+    #     "cll",
+    #     "crp",
+    #     "dal",
+    #     "drt",
+    #     "ggg",
+    #     "hrl",
+    #     "ile",
+    #     "lbb",
+    #     "lrd",
+    #     "maf",
+    #     "mfe",
+    #     "sat",
+    #     "sjt",
+    #     "sps",
+    #     "tyr",
+    #     "vct"
+    # ]
+    # path_fleetmixes = [path_dfw_fleetmix_cln] + [path_fleetmix_clean] * (
+    #     len(fac_ids) - 1)
+    # ops_grps = ["Commercial"] * len(fac_ids)
+
     fac_ids = [
-        "aus",
-        "abi",
-        "act",
-        "ama",
-        "elp",
-        "dfw",
-        "bpt",
-        "bro",
-        "cll",
-        "crp",
-        "dal",
-        "drt",
-        "ggg",
-        "hrl",
-        "ile",
-        "lbb",
-        "lrd",
-        "maf",
-        "mfe",
-        "sat",
-        "sjt",
-        "sps",
-        "tyr",
+        "ads",
+        "afw",
+        "axh",
+        "cxo",
+        "dto",
+        "dwh",
+        "ftw",
+        "fws",
+        "gky",
+        "gls",
+        "gpm",
+        "gtu",
+        "hqz",
+        "hyi",
+        "iws",
+        "lbx",
+        "lnc",
+        "lvj",
+        "rbd",
+        "sgr",
+        "skf",
+        "ssf",
+        "t41",
+        "tki",
     ]
-    path_fleetmixes = [path_fleetmix_clean] * 5 + [path_dfw_fleetmix_cln]
+    path_fleetmixes = [path_fleetmix_clean] * len(fac_ids)
+    ops_grps = ["Reliever"] * len(fac_ids)
 
+    fac_ids = ["dwh"]
     path_fleetmixes = [path_fleetmix_clean]
-    fac_ids = ["vct"]
+    ops_grps = ["Reliever"]
 
-    for path_fleetmix_clean, fac_id in zip(path_fleetmixes, fac_ids):
+    for path_fleetmix_clean, op_grp, fac_id in zip(path_fleetmixes, ops_grps, fac_ids):
+        fac_id_use = fac_id
+        if fac_id == "test":
+            fac_id_use = "dwh"
         arpt_db = f"{fac_id}_dummy"
         ops, annual_ops = ops_prep(
             path_imputed_ops_=path_imputed_ops,
             path_fltmix_=path_fleetmix_clean,
-            ops_grp="Commercial",
-            fac_id=fac_id,
+            ops_grp=op_grp,
+            fac_id=fac_id_use,
         )
         flt_db_dict = get_flt_db_tabs()
         ops_airfm_eng = add_eng_arfm_equip_cols(

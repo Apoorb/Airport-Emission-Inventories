@@ -213,7 +213,6 @@ class AsifXml:
 
 
 if __name__ == "__main__":
-    fac_id = "elp"
     fac_ids = [
         "aus",
         "abi",
@@ -238,9 +237,35 @@ if __name__ == "__main__":
         "sjt",
         "sps",
         "tyr",
+        "vct",
     ]
-
-    fac_ids = ["vct"]
+    fac_ids = [
+        "ads",
+        "afw",
+        "axh",
+        "cxo",
+        "dto",
+        "dwh",
+        "ftw",
+        "fws",
+        "gky",
+        "gls",
+        "gpm",
+        "gtu",
+        "hqz",
+        "hyi",
+        "iws",
+        "lbx",
+        "lnc",
+        "lvj",
+        "rbd",
+        "sgr",
+        "skf",
+        "ssf",
+        "t41",
+        "tki",
+    ]
+    fac_ids = ["dwh"]
     for fac_id in fac_ids:
         path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
         asif_input_fi = Path.home().joinpath(
