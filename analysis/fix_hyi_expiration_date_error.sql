@@ -1,0 +1,3 @@
+UPDATE [hyi_2019_ems].[dbo].[APT_ID] SET [EXP_DATE] = '2029-12-31 23:59:00';
+UPDATE [hyi_2019_ems].[dbo].[APT_MAIN] SET [EXP_DATE] = '2029-12-31 23:59:00';
+UPDATE [hyi_2019_ems].[dbo].[APT_CODE] SET [EXP_DATE] = '2029-12-31 23:59:00';
