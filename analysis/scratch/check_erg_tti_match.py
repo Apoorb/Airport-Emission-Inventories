@@ -9,13 +9,24 @@ from pathlib import Path
 
 
 path_erg = Path.home().joinpath(PATH_RAW, "madhu_files", "ERG_2017.csv")
-path_tti = (
+path_tti_com = (
     r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
     r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI"
     r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2019"
     r"\bakFile_metricResults\Commercial"
 )
-tti_files = [file for file in Path(path_tti).glob("*.csv")]
+
+path_tti_rel = (
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
+    r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI"
+    r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2019"
+    r"\bakFile_metricResults\Reliver"
+)
+
+
+tti_files = [file for file in Path(path_tti_com).glob("*.csv")] + [
+    file for file in Path(path_tti_rel).glob("*.csv")
+]
 
 erg_df = pd.read_csv(path_erg)
 erg_df_1 = erg_df.rename(columns=get_snake_case_dict(erg_df)).rename(
@@ -45,6 +56,7 @@ erg_df_2 = (
 list_df = []
 for file in tti_files:
     facility_id = file.name.split("_")[0]
+    fac_grp = file.parent.name
     df = pd.read_csv(file)
     df_1 = df.rename(columns=get_snake_case_dict(df)).assign(facility_id=facility_id)
     df_1["mode"].unique()
@@ -97,6 +109,7 @@ for file in tti_files:
     df_4 = df_3.set_index(["facility_id", "mode"]).stack().reset_index()
     df_4.columns = ["facility_id", "mode", "eis_pollutant_id", "emis_tons"]
     df_5 = (df_4.merge(df_ltos_2, on=["facility_id", "mode"])).assign(
+        fac_grp=fac_grp,
         emis_per_lto=lambda df: df.emis_tons / df.lto
     )
     list_df.append(df_5)
