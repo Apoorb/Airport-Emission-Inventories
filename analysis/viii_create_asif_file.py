@@ -265,7 +265,9 @@ if __name__ == "__main__":
         "t41",
         "tki",
     ]
-    fac_ids = ["dwh"]
+    ass_fac_ids = ["bif", "hpy", "t23"]
+
+    fac_ids = ass_fac_ids
     for fac_id in fac_ids:
         path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
         asif_input_fi = Path.home().joinpath(

@@ -44,51 +44,49 @@ def clean_fleetmix_1(
 
 
 if __name__ == "__main__":
-    ass_fac_id = "22xs"
-    ops_grp = "Military"
-    # ops_grp = "TASP"
-    # ops_grp = "Other_PU_Airports"
-
-    path_fleetmix_clean = Path.home().joinpath(
-        PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
-    )
-    ops = clean_fleetmix_1(
-        path_fltmix_=path_fleetmix_clean,
-        ops_grp="Military",
-        facility_type="AIRPORT",
-        ass_fac_id="22xs"
-    )
-    flt_db_dict = get_flt_db_tabs()
-    ops_airfm_eng = add_eng_arfm_equip_cols(
-        ops_=ops, airfm=flt_db_dict["airfm"], eng=flt_db_dict["eng"]
-    )
-    ops_airfm_eng_apu = (
-        ops_airfm_eng
-        .assign(
-            apu_name=np.NAN
+    ass_fac_ids = ["bif", "hpy", "t23"]
+    ops_grps = ["Military", "Other_PU_Airports", "TASP"]
+    for ass_fac_id, ops_grp in zip(ass_fac_ids, ops_grps):
+        path_fleetmix_clean = Path.home().joinpath(
+            PATH_INTERIM, "fleetmix_axb_07_05_2021.xlsx"
         )
-    )
-    ops_airfm_eng_apu_dict = add_profiles(
-        ops_airfm_eng_apu_=ops_airfm_eng_apu,
-        anp_arp_heli_prof=flt_db_dict["anp_arp_heli_prof"],
-    )
+        ops = clean_fleetmix_1(
+            path_fltmix_=path_fleetmix_clean,
+            ops_grp="Military",
+            facility_type="AIRPORT",
+            ass_fac_id="22xs"
+        )
+        flt_db_dict = get_flt_db_tabs()
+        ops_airfm_eng = add_eng_arfm_equip_cols(
+            ops_=ops, airfm=flt_db_dict["airfm"], eng=flt_db_dict["eng"]
+        )
+        ops_airfm_eng_apu = (
+            ops_airfm_eng
+            .assign(
+                apu_name=np.NAN
+            )
+        )
+        ops_airfm_eng_apu_dict = add_profiles(
+            ops_airfm_eng_apu_=ops_airfm_eng_apu,
+            anp_arp_heli_prof=flt_db_dict["anp_arp_heli_prof"],
+        )
 
-    ops_airfm_eng_apu_dict["data"]["ops_fleet_adj"] = 2
-    annual_ops = ops_airfm_eng_apu_dict["data"]["ops_fleet_adj"].sum() / 2
-    ltos_airfm_eng_apu_prf = split_ops_arrdep(
-        ops_airfm_eng_apu_prf_=ops_airfm_eng_apu_dict["data"],
-        annual_ops_=annual_ops,
-    )
+        ops_airfm_eng_apu_dict["data"]["ops_fleet_adj"] = 2
+        annual_ops = ops_airfm_eng_apu_dict["data"]["ops_fleet_adj"].sum() / 2
+        ltos_airfm_eng_apu_prf = split_ops_arrdep(
+            ops_airfm_eng_apu_prf_=ops_airfm_eng_apu_dict["data"],
+            annual_ops_=annual_ops,
+        )
 
-    arpt_db = f"{ass_fac_id}_dummy"
-    trk_layout_dict = get_arptdummy_trks_layout(arptdummy_db=arpt_db)
-    asif_input_fi = Path.home().joinpath(
-        PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(ass_fac_id)
-    )
-    xlwr = pd.ExcelWriter(asif_input_fi)
-    trk_layout_dict["layout"].to_excel(xlwr, "layout")
-    trk_layout_dict["track"].to_excel(xlwr, "track")
-    ltos_airfm_eng_apu_prf.to_excel(xlwr, "ltos")
-    xlwr.save()
+        arpt_db = f"{ass_fac_id}_dummy"
+        trk_layout_dict = get_arptdummy_trks_layout(arptdummy_db=arpt_db)
+        asif_input_fi = Path.home().joinpath(
+            PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(ass_fac_id)
+        )
+        xlwr = pd.ExcelWriter(asif_input_fi)
+        trk_layout_dict["layout"].to_excel(xlwr, "layout")
+        trk_layout_dict["track"].to_excel(xlwr, "track")
+        ltos_airfm_eng_apu_prf.to_excel(xlwr, "ltos")
+        xlwr.save()
 
 
