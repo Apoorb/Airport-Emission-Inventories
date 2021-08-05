@@ -208,7 +208,7 @@ def ops_prep(
     ops_grp="Commercial",
     fac_id="iah",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    ops2019 = pd.read_excel(path_imputed_ops)
+    ops2019 = pd.read_excel(path_imputed_ops_)
     ops2019_fgrp = ops2019.loc[lambda df: df.facility_group == ops_grp]
     ops2019_fgrp_fid = ops2019_fgrp.loc[lambda df: df.facility_id == fac_id]
     annual_ops_2019 = ops2019_fgrp_fid.annual_operations.values[0]
