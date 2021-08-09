@@ -101,6 +101,7 @@ def get_flt_db_tabs(flt_db="FLEET") -> dict[pd.DataFrame, pd.DataFrame, pd.DataF
     )
     def_apu = pd.read_sql("SELECT * FROM [FLEET].[dbo].[FLT_APU]", conn)
     apu_name = pd.read_sql("SELECT * FROM [dbo].[FLT_APU_DEFAULTS]", conn)
+    equip = pd.read_sql("SELECT * FROM [dbo].[FLT_EQUIPMENT]", conn)
     conn.close()
     eng_df_1 = eng_df.rename(columns=get_snake_case_dict(eng_df)).filter(
         items=["engine_id", "engine_code"]
@@ -118,6 +119,7 @@ def get_flt_db_tabs(flt_db="FLEET") -> dict[pd.DataFrame, pd.DataFrame, pd.DataF
 
     def_apu_1 = def_apu.rename(columns=get_snake_case_dict(def_apu))
     apu_name_1 = apu_name.rename(columns=get_snake_case_dict(apu_name))
+    equip_1 = equip.rename(columns=get_snake_case_dict(equip))
     def_apu_2 = def_apu_1.merge(apu_name_1, on="apu_id").filter(
         items=["apu_id", "apu_name", "airframe_id", "user_defined"]
     )
@@ -127,6 +129,7 @@ def get_flt_db_tabs(flt_db="FLEET") -> dict[pd.DataFrame, pd.DataFrame, pd.DataF
         eng=eng_df_1,
         anp_arp_heli_prof=anp_arp_heli_prof,
         apu_nm=def_apu_2,
+        equip=equip_1,
     )
 
 

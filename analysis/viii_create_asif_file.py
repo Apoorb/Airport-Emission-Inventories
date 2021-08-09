@@ -93,7 +93,7 @@ class AsifXml:
         for key, val in case_meta_attr.items():
             self.asif_tre.find(f".//{key}").text = val
 
-    def set_trackopsets(self) -> None:
+    def set_trackopsets(self, assignDefaultGse_="true") -> None:
         self.asif_trackopset_dict["A"].getparent().remove(
             self.asif_trackopset_dict["A"]
         )
@@ -125,6 +125,7 @@ class AsifXml:
                     ops_fil_=ops_fil,
                     trk_fil_=trk_fil,
                     asif_trackopset_dcpy_=asif_trackopset_dcpy,
+                    assignDefaultGse_=assignDefaultGse_,
                 )
                 self.elem_before_trackopset.addnext(asif_trackopset_dcpy)
                 self.set_annualization()
@@ -150,6 +151,7 @@ class AsifXml:
         ops_fil_: pd.DataFrame,
         trk_fil_: pd.DataFrame,
         asif_trackopset_dcpy_: lxml.etree._Element,
+        assignDefaultGse_: str,
     ) -> None:
         asif_ops = asif_trackopset_dcpy_.find(".//operations")
         asif_op = asif_trackopset_dcpy_.find(".//operation")
@@ -162,6 +164,7 @@ class AsifXml:
             asif_op_dcpy_dcpy.find(".//id").text = op_type_ + str(row.ids)
             asif_op_dcpy_dcpy.find(".//airframeModel").text = row.arfm_mod
             asif_op_dcpy_dcpy.find(".//engineCode").text = row.engine_code
+            asif_op_dcpy_dcpy.find(".//assignDefaultGse").text = assignDefaultGse_
             if row.apu_name != row.apu_name:
                 asif_op_dcpy_dcpy.find(".//apuName").getparent().remove(
                     asif_op_dcpy_dcpy.find(".//apuName")
@@ -266,7 +269,7 @@ if __name__ == "__main__":
         "tki",
     ]
     ass_fac_ids = ["bif", "hpy", "t23"]
-
+    assignDefaultGse = "false"
     fac_ids = ass_fac_ids
     for fac_id in fac_ids:
         path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
@@ -283,6 +286,6 @@ if __name__ == "__main__":
         asifxml_obj.set_tree_trk_layout_ops()
         asifxml_obj.set_scn_meta()
         asifxml_obj.set_case_meta()
-        asifxml_obj.set_trackopsets()
+        asifxml_obj.set_trackopsets(assignDefaultGse_=assignDefaultGse)
         asifxml_obj.set_annualization()
         asifxml_obj.write_asif(path_out=path_asif_out)

@@ -54,6 +54,7 @@ erg_df_2 = (
 
 
 list_df = []
+list_df_detailed = []
 for file in tti_files:
     facility_id = file.name.split("_")[0]
     fac_grp = file.parent.name
@@ -71,6 +72,31 @@ for file in tti_files:
         np.nan,
     )
     df_1_fil = df_1.loc[df_1["mode"] != "nan"]
+
+    df_1_fil.loc[df_1_fil["mode"].isin(["GSE LTO", "APU"]), "equipment_type"] = "nan"
+
+    df_2_detailed = (
+        df_1_fil.assign(
+            co_st_=lambda df: df.co_st_ * df.num_ops,
+            co2_st_=lambda df: df.co2_st_ * df.num_ops,
+            voc_st_=lambda df: df.voc_st_ * df.num_ops,
+            n_ox_st_=lambda df: df.n_ox_st_ * df.num_ops,
+            s_ox_st_=lambda df: df.s_ox_st_ * df.num_ops,
+            pm_2_5_st_=lambda df: df.pm_2_5_st_ * df.num_ops,
+            pm_10_st_=lambda df: df.pm_10_st_ * df.num_ops,
+        )
+        .groupby(["facility_id", "mode", "equipment_type"])
+        .agg(
+            CO=("co_st_", "sum"),
+            CO2=("co2_st_", "sum"),
+            VOC=("voc_st_", "sum"),
+            NOX=("n_ox_st_", "sum"),
+            sox=("s_ox_st_", "sum"),
+            pm25=("pm_2_5_st_", "sum"),
+            pm10=("pm_10_st_", "sum"),
+        )
+        .reset_index()
+    )
 
     df_2 = (
         df_1_fil.assign(
@@ -95,8 +121,8 @@ for file in tti_files:
         .reset_index()
     )
 
-    df_1["id"] = df_1.user_id.str.split(r"[AD]", expand=True)[1]
-    df_ltos = df_1.drop_duplicates(["mode", "id"])
+    df_1_fil["id"] = df_1_fil.user_id.str.split(r"[AD]", expand=True)[1]
+    df_ltos = df_1_fil.drop_duplicates(["mode", "id"])
     df_ltos_1 = (
         df_ltos.groupby(["facility_id", "mode"])
         .agg(lto=("num_ops", "sum"))
@@ -104,17 +130,43 @@ for file in tti_files:
     )
     df_ltos_2 = df_ltos_1.loc[df_ltos_1["mode"] != "nan"]
 
-    df_3 = df_2[[col for col in df_2.columns if col != "lto"]]
-
-    df_4 = df_3.set_index(["facility_id", "mode"]).stack().reset_index()
-    df_4.columns = ["facility_id", "mode", "eis_pollutant_id", "emis_tons"]
-    df_5 = (df_4.merge(df_ltos_2, on=["facility_id", "mode"])).assign(
-        fac_grp=fac_grp,
-        emis_per_lto=lambda df: df.emis_tons / df.lto
+    df_ltos_detailed_1 = (
+        df_ltos.groupby(["facility_id", "mode", "equipment_type"])
+        .agg(lto=("num_ops", "sum"))
+        .reset_index()
     )
-    list_df.append(df_5)
+    df_ltos_detailed_2 = df_ltos_detailed_1.loc[df_ltos_detailed_1["mode"] != "nan"]
+
+    df_3 = df_2.set_index(["facility_id", "mode"]).stack().reset_index()
+    df_3.columns = ["facility_id", "mode", "eis_pollutant_id", "emis_tons"]
+    df_4 = (df_3.merge(df_ltos_2, on=["facility_id", "mode"])).assign(
+        fac_grp=fac_grp, emis_per_lto=lambda df: df.emis_tons / df.lto
+    )
+
+    df_3_detailed = (
+        df_2_detailed.set_index(["facility_id", "mode", "equipment_type"])
+        .stack()
+        .reset_index()
+    )
+    df_3_detailed.columns = [
+        "facility_id",
+        "mode",
+        "equipment_type",
+        "eis_pollutant_id",
+        "emis_tons",
+    ]
+    df_4_detailed = (
+        df_3_detailed.merge(
+            df_ltos_detailed_2, on=["facility_id", "mode", "equipment_type"]
+        )
+    ).assign(fac_grp=fac_grp)
+
+    list_df.append(df_4)
+    list_df_detailed.append(df_4_detailed)
 
 tti_df = pd.concat(list_df)
+tti_df_detailed = pd.concat(list_df_detailed)
+
 
 erg_df_2.eis_pollutant_id.replace("PM10-PRI", "pm10", inplace=True)
 erg_df_2.eis_pollutant_id.replace("PM25-PRI", "pm25", inplace=True)
@@ -132,4 +184,10 @@ tti_erg_arpt_df_1 = tti_erg_arpt_df.assign(
 )
 
 path_comp_out = Path.home().joinpath(PATH_INTERIM, "qc", "tti_vs_erg.xlsx")
-tti_erg_arpt_df_1.to_excel(path_comp_out, index=False)
+
+with pd.ExcelWriter(path_comp_out) as writer:
+    tti_erg_arpt_df_1.to_excel(writer, sheet_name="summary", index=False)
+    tti_df_detailed.to_excel(writer, sheet_name="detailed", index=False)
+
+# Check individual facility
+###############################################################################
