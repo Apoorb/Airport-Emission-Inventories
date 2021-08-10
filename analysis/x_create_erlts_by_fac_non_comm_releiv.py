@@ -422,9 +422,10 @@ if __name__ == "__main__":
     )
     path_tasp = Path.home().joinpath(path_tti_fi, "TASP_Airport_2019_opmode_st.csv")
     path_out_emis = Path.home().joinpath(
-        PATH_PROCESSED, "emisquant_non_comm_reliv.xlsx"
+        PATH_PROCESSED, "emis_non_comm_releiv.xlsx"
     )
-    path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_non_comm_reliv.xlsx")
+    path_out_flt = Path.home().joinpath(PATH_PROCESSED,
+                                        "fleet_non_comm_releiv.xlsx")
     med_heli_tmp = pd.read_csv(path_med_heli)
 
     # 2. Get the AEDT ERLTs
@@ -626,5 +627,5 @@ if __name__ == "__main__":
         "Missed some " "facilities."
     )
 
-    emis_rt_fin.to_excel(path_out_emis)
-    flt_fin.to_excel(path_out_flt)
+    emis_rt_fin.to_excel(path_out_emis, index=False)
+    flt_fin.to_excel(path_out_flt, index=False)
