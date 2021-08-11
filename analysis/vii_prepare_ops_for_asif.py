@@ -149,6 +149,10 @@ def get_arptdummy_trks_layout(
         (df.eff_date < datetime.strptime("1-1-2019", "%m-%d-%Y"))
         & (df.exp_date > datetime.strptime("1-1-2019", "%m-%d-%Y"))
     )
+    if arptdummy_db == "hyi_dummy":
+        lam_date = lambda df: (
+            (df.eff_date < datetime.strptime("1-1-2019", "%m-%d-%Y"))
+        )
     tracks_1 = (
         tracks.rename(columns=get_snake_case_dict(tracks))
         .loc[lam_date]
@@ -228,6 +232,8 @@ def clean_fleetmix(
 ) -> pd.DataFrame:
     fltmix_fgrp = pd.read_excel(path_fltmix_, sheet_name=ops_grp)
     fltmix_fgrp_fid = fltmix_fgrp.loc[lambda df: df.facility_id == fac_id]
+    if fac_id == "dfw":
+        fltmix_fgrp_fid["aircraft_id"] = np.nan
     fltmix_fgrp_fid_fin = (
         fltmix_fgrp_fid.groupby(
             ["facility_id", "closest_airframe_id_aedt", "engine_id"]
@@ -236,6 +242,7 @@ def clean_fleetmix(
             annual_operations=("annual_operations", "first"),
             anp_airplane_id=("anp_airplane_id", "first"),
             anp_helicopter_id=("anp_helicopter_id", "first"),
+            aircraft_id=("aircraft_id", "first"),
             fleetmix=("fleetmix", "sum"),
         )
         .reset_index()
@@ -352,9 +359,12 @@ if __name__ == "__main__":
             PATH_INTERIM, "harris_airport_data", "iah_aedt_study_ops_cln.xlsx"
         )
 
-    # Commercial Airports
+    fac_ids = ["dfw"]
+    path_fleetmixes = [path_dfw_fleetmix_cln]
+    ops_grps = ["Commercial"]
+
+    # # Commercial Airports
     # fac_ids = [
-    #     "dfw",
     #     "aus",
     #     "abi",
     #     "act",
@@ -379,42 +389,41 @@ if __name__ == "__main__":
     #     "tyr",
     #     "vct"
     # ]
-    # path_fleetmixes = [path_dfw_fleetmix_cln] + [path_fleetmix_clean] * (
-    #     len(fac_ids) - 1)
+    # path_fleetmixes = [path_fleetmix_clean] * (len(fac_ids))
     # ops_grps = ["Commercial"] * len(fac_ids)
 
-    fac_ids = [
-        "ads",
-        "afw",
-        "axh",
-        "cxo",
-        "dto",
-        "dwh",
-        "ftw",
-        "fws",
-        "gky",
-        "gls",
-        "gpm",
-        "gtu",
-        "hqz",
-        "hyi",
-        "iws",
-        "lbx",
-        "lnc",
-        "lvj",
-        "rbd",
-        "sgr",
-        "skf",
-        "ssf",
-        "t41",
-        "tki",
-    ]
-    path_fleetmixes = [path_fleetmix_clean] * len(fac_ids)
-    ops_grps = ["Reliever"] * len(fac_ids)
+    # fac_ids = [
+    #     "ads",
+    #     "afw",
+    #     "axh",
+    #     "cxo",
+    #     "dto",
+    #     "dwh",
+    #     "ftw",
+    #     "fws",
+    #     "gky",
+    #     "gls",
+    #     "gpm",
+    #     "gtu",
+    #     "hqz",
+    #     "hyi",
+    #     "iws",
+    #     "lbx",
+    #     "lnc",
+    #     "lvj",
+    #     "rbd",
+    #     "sgr",
+    #     "skf",
+    #     "ssf",
+    #     "t41",
+    #     "tki",
+    # ]
+    # path_fleetmixes = [path_fleetmix_clean] * len(fac_ids)
+    # ops_grps = ["Reliever"] * len(fac_ids)
 
-    fac_ids = ["dwh"]
-    path_fleetmixes = [path_fleetmix_clean]
-    ops_grps = ["Reliever"]
+    # fac_ids = ["hyi"]
+    # path_fleetmixes = [path_fleetmix_clean] * len(fac_ids)
+    # ops_grps = ["Reliever"] * len(fac_ids)
 
     for path_fleetmix_clean, op_grp, fac_id in zip(path_fleetmixes, ops_grps, fac_ids):
         fac_id_use = fac_id

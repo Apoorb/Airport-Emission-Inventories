@@ -17,12 +17,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from analysis.vii_prepare_ops_for_asif import get_flt_db_tabs
-from airportei.utilis import (
-    PATH_PROCESSED,
-    PATH_INTERIM,
-    get_snake_case_dict,
-    connect_to_sql_server,
-)
+from airportei.utilis import PATH_PROCESSED, PATH_INTERIM
 
 
 def filter_erlt(aedt_erlt_):
@@ -168,13 +163,14 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
             .merge(eng_df_1, on="engine_id", how="left")
         )
     flt_heli["Equipment Type"] = flt_heli.anp_helicopter_id + "/" + flt_heli.engine_code
-    flt_heli["Num Ops"] = flt_heli.annual_operations * flt_heli.fleetmix / 2
+    flt_heli["ops"] = flt_heli.annual_operations * flt_heli.fleetmix
+    flt_heli["ltos"] = flt_heli.annual_operations * flt_heli.fleetmix / 2
     assert flt_heli.engine_code.isna().sum() == 0
     emis_heli = flt_heli.merge(
         aedt_erlt_1_[analyfac].drop(columns="Num Ops"), on="Equipment Type", how="left"
     )
     assert emis_heli["CO (ST)"].isna().sum() == 0
-    keep_cols = [
+    flt_keep_cols = [
         "facility_id",
         "facility_name",
         "facility_group",
@@ -187,7 +183,24 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
         "anp_helicopter_id",
         "engine_code",
         "Equipment Type",
-        "Num Ops",
+        "ops",
+        "ltos",
+    ]
+
+    emis_keep_cols = [
+        "facility_id",
+        "facility_name",
+        "facility_group",
+        "facility_type",
+        "annual_operations",
+        "aircraft_id",
+        "engine_id",
+        "fleetmix",
+        "anp_airplane_id",
+        "anp_helicopter_id",
+        "engine_code",
+        "Equipment Type",
+        "ltos",
         "Event ID",
         "Departure Airport",
         "Arrival Airport",
@@ -214,8 +227,9 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
         "User ID",
         "Operation Time",
     ]
-    emis_heli_fil = emis_heli.filter(items=keep_cols)
-    return flt_heli, emis_heli_fil
+    emis_heli_fil = emis_heli.filter(items=emis_keep_cols)
+    flt_heli_fil = flt_heli.filter(items=flt_keep_cols)
+    return flt_heli_fil, emis_heli_fil
 
 
 def create_fandr_flt(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="fandr_arpt"):
@@ -333,7 +347,8 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
     )
     # Reassign number of operations based on the fleetmix data. We are using
     # AEDT output only as ERLT.
-    flt_arpt["Num Ops"] = flt_arpt.annual_operations * flt_arpt.fleetmix / 2
+    flt_arpt["ops"] = flt_arpt.annual_operations * flt_arpt.fleetmix
+    flt_arpt["ltos"] = flt_arpt.annual_operations * flt_arpt.fleetmix / 2
 
     assert flt_arpt.airpl_heli_lab.isna().sum() == 0
     assert flt_arpt.engine_code.isna().sum() == 0
@@ -351,7 +366,7 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
     #     print(test)
     assert emis_arpt["CO (ST)"].isna().sum() == 0
 
-    keep_cols = [
+    flt_keep_cols = [
         "facility_id",
         "facility_name",
         "facility_group",
@@ -364,7 +379,24 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
         "anp_helicopter_id",
         "engine_code",
         "Equipment Type",
-        "Num Ops",
+        "ops",
+        "ltos",
+    ]
+
+    emis_keep_cols = [
+        "facility_id",
+        "facility_name",
+        "facility_group",
+        "facility_type",
+        "annual_operations",
+        "aircraft_id",
+        "engine_id",
+        "fleetmix",
+        "anp_airplane_id",
+        "anp_helicopter_id",
+        "engine_code",
+        "Equipment Type",
+        "ltos",
         "Event ID",
         "Departure Airport",
         "Arrival Airport",
@@ -391,8 +423,9 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
         "User ID",
         "Operation Time",
     ]
-    emis_arpt_fil = emis_arpt.filter(items=keep_cols)
-    return flt_arpt, emis_arpt_fil
+    flt_arpt_fil = flt_arpt.filter(items=flt_keep_cols)
+    emis_arpt_fil = emis_arpt.filter(items=emis_keep_cols)
+    return flt_arpt_fil, emis_arpt_fil
 
 
 if __name__ == "__main__":
@@ -421,11 +454,8 @@ if __name__ == "__main__":
         path_tti_fi, "OPUA_Airport_2019_opmode_st.csv"
     )
     path_tasp = Path.home().joinpath(path_tti_fi, "TASP_Airport_2019_opmode_st.csv")
-    path_out_emis = Path.home().joinpath(
-        PATH_PROCESSED, "emis_non_comm_releiv.xlsx"
-    )
-    path_out_flt = Path.home().joinpath(PATH_PROCESSED,
-                                        "fleet_non_comm_releiv.xlsx")
+    path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_non_comm_releiv.xlsx")
+    path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_non_comm_releiv.xlsx")
     med_heli_tmp = pd.read_csv(path_med_heli)
 
     # 2. Get the AEDT ERLTs
@@ -618,7 +648,6 @@ if __name__ == "__main__":
     emis_rt_fin = pd.concat(emis_rt.values())
 
     for key, value in emis_rt.items():
-        print(key)
         assert set(emis_rt[key].facility_id.unique()) == set(
             opsdict[key].facility_id.unique()
         )
