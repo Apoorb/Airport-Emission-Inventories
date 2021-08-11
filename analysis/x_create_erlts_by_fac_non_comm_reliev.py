@@ -147,6 +147,7 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
                     "facility_name",
                     "facility_group",
                     "facility_type",
+                    "airframe_id",
                     "aircraft_id",
                     "anp_airplane_id",
                     "anp_helicopter_id",
@@ -165,6 +166,7 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
     flt_heli["Equipment Type"] = flt_heli.anp_helicopter_id + "/" + flt_heli.engine_code
     flt_heli["ops"] = flt_heli.annual_operations * flt_heli.fleetmix
     flt_heli["ltos"] = flt_heli.annual_operations * flt_heli.fleetmix / 2
+    flt_heli.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
     assert flt_heli.engine_code.isna().sum() == 0
     emis_heli = flt_heli.merge(
         aedt_erlt_1_[analyfac].drop(columns="Num Ops"), on="Equipment Type", how="left"
@@ -176,7 +178,8 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",
@@ -193,7 +196,8 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",
@@ -345,6 +349,7 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
     flt_arpt["Equipment Type"] = (
         flt_arpt.airpl_heli_lab.str.lower() + "/" + flt_arpt.engine_code.str.lower()
     )
+    flt_arpt.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
     # Reassign number of operations based on the fleetmix data. We are using
     # AEDT output only as ERLT.
     flt_arpt["ops"] = flt_arpt.annual_operations * flt_arpt.fleetmix
@@ -372,7 +377,8 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",
@@ -389,7 +395,8 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_):
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",

@@ -8,10 +8,6 @@ from analysis.vii_prepare_ops_for_asif import get_flt_db_tabs
 from airportei.utilis import PATH_PROCESSED, PATH_INTERIM
 
 
-def filter_emis_comm_reliev():
-    ...
-
-
 path_ops2019_clean = Path.home().joinpath(
     PATH_INTERIM, "ops2019_meta_imputed_cor_counties.xlsx"
 )
@@ -69,6 +65,34 @@ for file in tti_files:
         )
         asif_in["User ID"] = asif_in["op_type"] + asif_in["ids"].astype(str)
         df = df.merge(asif_in, on="User ID", how="left")
+    else:
+        flt_tabs = get_flt_db_tabs()
+        df_arfm_eng_lookup = pd.DataFrame(
+            df.loc[df.Mode == "Climb Below Mixing Height"].drop_duplicates(
+                ["Equipment Type"], keep="first"
+            )["Equipment Type"]
+        )
+        df_arfm_eng_lookup[["arfm_mod", "engine_code"]] = df_arfm_eng_lookup[
+            "Equipment Type"
+        ].str.rsplit("/", expand=True, n=1)
+        df_arfm_eng_lookup = df_arfm_eng_lookup.merge(
+            flt_tabs["eng"].assign(engine_code=lambda df: df.engine_code),
+            on="engine_code",
+        )
+        df_arfm_eng_lookup = df_arfm_eng_lookup.merge(
+            flt_tabs["airfm"], on="arfm_mod", how="left"
+        )
+        df_arfm_eng_lookup.loc[lambda df: df.arfm_mod == "A109", ["airframe_id"]] = 5238
+        df_arfm_eng_lookup.loc[
+            lambda df: df.arfm_mod == "EC130", ["airframe_id"]
+        ] = 5177
+        # df_arfm_eng_lookup.loc[lambda df: df.arfm_mod == "EC130",
+        # "airframe_id"] = 5177
+        assert (
+            df_arfm_eng_lookup.airframe_id.isna().sum() == 0
+        ), "Remove GSE equipments."
+        df = df.merge(df_arfm_eng_lookup, on="Equipment Type", how="left")
+
     ops_2019_fil_fac = ops_2019_fil.loc[lambda df: df.facility_id == facility_id]
     df["facility_id"] = ops_2019_fil_fac["facility_id"].values[0]
     df["facility_name"] = ops_2019_fil_fac["facility_name"].values[0]
@@ -112,6 +136,7 @@ for file in tti_files:
     emis = df_fil_1
     flt = df_lto_2.sort_values("ops", ascending=False).reset_index(drop=True)
     flt["fleetmix"] = flt["ops"] / flt["annual_operations"]
+    flt.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
 
     flt_keep_cols = [
         "facility_id",
@@ -119,7 +144,8 @@ for file in tti_files:
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",
@@ -138,7 +164,8 @@ for file in tti_files:
         "facility_group",
         "facility_type",
         "annual_operations",
-        "aircraft_id",
+        "airframe_id",
+        "tfmsc_aircraft_id",
         "engine_id",
         "fleetmix",
         "anp_airplane_id",
@@ -172,6 +199,7 @@ for file in tti_files:
         "User ID",
         "Operation Time",
     ]
+    emis.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
 
     emis_fil = emis.filter(items=keep_cols)
 
