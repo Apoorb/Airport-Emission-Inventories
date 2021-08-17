@@ -11,11 +11,13 @@ from pathlib import Path
 path_erg = Path.home().joinpath(PATH_RAW, "madhu_files", "ERG_2017.csv")
 path_tti_comm_releiv = (
     r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed"
-    r"\emis_comm_releiv.xlsx")
+    r"\emis_comm_releiv.xlsx"
+)
 
 path_tti_non_comm_releiv = (
     r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed"
-    r"\emis_non_comm_releiv.xlsx")
+    r"\emis_non_comm_releiv.xlsx"
+)
 
 
 tti_files = [path_tti_comm_releiv, path_tti_non_comm_releiv]
@@ -35,9 +37,11 @@ erg_ltos = (
 )
 
 erg_df_2 = (
-    erg_df_1
-    .loc[lambda df: df.eis_pollutant_id.isin(["CO", "CO2", "VOC", "NOX",
-                                              "PM25-PRI", "PM10-PRI"])]
+    erg_df_1.loc[
+        lambda df: df.eis_pollutant_id.isin(
+            ["CO", "CO2", "VOC", "NOX", "PM25-PRI", "PM10-PRI"]
+        )
+    ]
     .rename(columns={"airport": "airport_erg"})
     .groupby(["facility_id", "airport_erg", "mode", "eis_pollutant_id"])
     .agg(lto=("lto", "sum"), emis_tons=("uncontrolled_annual_emis_st", "sum"))
@@ -54,7 +58,6 @@ list_df_detailed = []
 for file in tti_files:
     df = pd.read_excel(file)
     df.rename(columns=get_snake_case_dict(df), inplace=True)
-    len(df.facility_id.unique())
     df["mode"].unique()
     df["mode"] = np.select(
         [
@@ -80,8 +83,16 @@ for file in tti_files:
             pm_2_5_st_=lambda df: df.pm_2_5_st_ * df.ltos,
             pm_10_st_=lambda df: df.pm_10_st_ * df.ltos,
         )
-        .groupby(["facility_group", "facility_type", "facility_id",
-                  "facility_name", "mode", "equipment_type"])
+        .groupby(
+            [
+                "facility_group",
+                "facility_type",
+                "facility_id",
+                "facility_name",
+                "mode",
+                "equipment_type",
+            ]
+        )
         .agg(
             CO=("co_st_", "sum"),
             CO2=("co2_st_", "sum"),
@@ -93,6 +104,7 @@ for file in tti_files:
         )
         .reset_index()
     )
+    len(df_fil.facility_id.unique())
 
     df_2 = (
         df_fil.assign(
@@ -104,8 +116,9 @@ for file in tti_files:
             pm_2_5_st_=lambda df: df.pm_2_5_st_ * df.ltos,
             pm_10_st_=lambda df: df.pm_10_st_ * df.ltos,
         )
-        .groupby(["facility_group", "facility_type", "facility_id",
-                  "facility_name", "mode"])
+        .groupby(
+            ["facility_group", "facility_type", "facility_id", "facility_name", "mode"]
+        )
         .agg(
             CO=("co_st_", "sum"),
             CO2=("co2_st_", "sum"),
@@ -119,9 +132,7 @@ for file in tti_files:
     )
     df_ltos = df_fil.drop_duplicates(["facility_id", "mode", "equipment_type"])
     df_ltos_1 = (
-        df_ltos.groupby(["facility_id", "mode"])
-        .agg(lto=("ltos", "sum"))
-        .reset_index()
+        df_ltos.groupby(["facility_id", "mode"]).agg(lto=("ltos", "sum")).reset_index()
     )
 
     df_ltos_detailed_1 = (
@@ -130,11 +141,22 @@ for file in tti_files:
         .reset_index()
     )
 
-    df_3 = df_2.set_index(["facility_group", "facility_type", "facility_id",
-                  "facility_name", "mode"]).stack().reset_index()
-    df_3.columns = ["facility_group", "facility_type", "facility_id",
-                  "facility_name", "mode", "eis_pollutant_id",
-                    "emis_tons"]
+    df_3 = (
+        df_2.set_index(
+            ["facility_group", "facility_type", "facility_id", "facility_name", "mode"]
+        )
+        .stack()
+        .reset_index()
+    )
+    df_3.columns = [
+        "facility_group",
+        "facility_type",
+        "facility_id",
+        "facility_name",
+        "mode",
+        "eis_pollutant_id",
+        "emis_tons",
+    ]
     df_4 = (df_3.merge(df_ltos_1, on=["facility_id", "mode"])).assign(
         emis_per_lto=lambda df: df.emis_tons / df.lto
     )
@@ -151,10 +173,8 @@ for file in tti_files:
         "eis_pollutant_id",
         "emis_tons",
     ]
-    df_4_detailed = (
-        df_3_detailed.merge(
-            df_ltos_detailed_1, on=["facility_id", "mode", "equipment_type"]
-        )
+    df_4_detailed = df_3_detailed.merge(
+        df_ltos_detailed_1, on=["facility_id", "mode", "equipment_type"]
     )
 
     list_df.append(df_4)
@@ -163,13 +183,16 @@ for file in tti_files:
 tti_df = pd.concat(list_df)
 tti_df_detailed = pd.concat(list_df_detailed)
 
+assert len(tti_df.drop_duplicates(["facility_group", "facility_id"])) == 2032
 
 erg_df_2.eis_pollutant_id.replace("PM10-PRI", "pm10", inplace=True)
 erg_df_2.eis_pollutant_id.replace("PM25-PRI", "pm25", inplace=True)
 
 tti_erg_df = tti_df.merge(
-    erg_df_2, on=["facility_id", "mode", "eis_pollutant_id"], suffixes=[
-        "_tti", "_erg"], how="outer"
+    erg_df_2,
+    on=["facility_id", "mode", "eis_pollutant_id"],
+    suffixes=["_tti", "_erg"],
+    how="outer",
 )
 
 

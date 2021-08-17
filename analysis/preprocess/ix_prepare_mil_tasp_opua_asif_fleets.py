@@ -2,13 +2,12 @@
 Get unique airframe ids and engine ids for military, TASP, and OPUA airports.
 Assign 1 to the operations.
 """
-from datetime import datetime
 import pandas as pd
 import numpy as np
 import pathlib
 from pathlib import Path
-from airportei.utilis import PATH_INTERIM, connect_to_sql_server, get_snake_case_dict
-from analysis.vii_prepare_ops_for_asif import (
+from airportei.utilis import PATH_INTERIM
+from analysis.preprocess.vii_prepare_ops_for_asif import (
     get_flt_db_tabs,
     add_eng_arfm_equip_cols,
     add_apu_nms,

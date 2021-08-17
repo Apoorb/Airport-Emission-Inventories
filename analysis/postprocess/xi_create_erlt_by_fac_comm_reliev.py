@@ -4,7 +4,7 @@ Get fleetmix and emission rates for the commercial and reliever airports.
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from analysis.vii_prepare_ops_for_asif import get_flt_db_tabs
+from analysis.preprocess.vii_prepare_ops_for_asif import get_flt_db_tabs
 from airportei.utilis import PATH_PROCESSED, PATH_INTERIM
 
 
@@ -28,8 +28,8 @@ path_tti_rel = (
     r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2019"
     r"\bakFile_metricResults\Reliever"
 )
-path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_comm_releiv.xlsx")
-path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_releiv.xlsx")
+path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_comm_reliev.xlsx")
+path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_reliev.xlsx")
 
 tti_files = [file for file in Path(path_tti_com).glob("*.csv")] + [
     file for file in Path(path_tti_rel).glob("*.csv")
@@ -99,6 +99,9 @@ for file in tti_files:
     df["facility_group"] = ops_2019_fil_fac["facility_group"].values[0]
     df["facility_type"] = ops_2019_fil_fac["facility_type"].values[0]
     df["annual_operations"] = ops_2019_fil_fac["annual_operations"].values[0]
+    df["filled_from_facility_id"] = np.nan
+    df["filled_from_facility_ops_per_diff"] = np.nan
+    df["source"] = "TFMSC"
     df["Mode"] = np.select(
         [
             df["Mode"] == "Climb Below Mixing Height",
@@ -154,6 +157,9 @@ for file in tti_files:
         "Equipment Type",
         "ops",
         "ltos",
+        "filled_from_facility_id",
+        "filled_from_facility_ops_per_diff",
+        "source"
     ]
 
     flt_fil = flt.filter(items=flt_keep_cols)
@@ -174,6 +180,9 @@ for file in tti_files:
         "Equipment Type",
         "ops",
         "ltos",
+        "filled_from_facility_id",
+        "filled_from_facility_ops_per_diff",
+        "source",
         "Event ID",
         "Departure Airport",
         "Arrival Airport",
