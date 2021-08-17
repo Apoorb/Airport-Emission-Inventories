@@ -99,7 +99,7 @@ def create_mil_flt(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="mil_heli"):
     df_1["aircraft_id"] = None
 
     df_2 = df_1.merge(flt_tabs_["airfm"], on="airframe_id")
-    df_2["fleetmix"] = 0.33
+    df_2["fleetmix"] = 1 / 3
 
     flt_heli_list = []
     for idx, row in opsdict_[analyfac].iterrows():
@@ -378,18 +378,20 @@ def getarptemis(
             ["TFMSC", fil_source_],
             None,
         )
-    # Adjust fleetmix and operations after removing missing airframes+engines.
-    flt_arpt = flt_arpt.assign(
-        fleetmix_adj=lambda df: df.fleetmix / df.fleetmix.sum(),
-        ops_fleet_adj=lambda df: df.fleetmix_adj * df.annual_operations,
-    )
+    # Adjust fleetmix and operations after removing missing airframesm+engines.
+    flt_arpt["fleetmix_sum"] = flt_arpt.groupby(
+        "facility_id").fleetmix.transform("sum")
+    flt_arpt["fleetmix"] = flt_arpt.fleetmix / flt_arpt.fleetmix_sum
+    flt_arpt["ops"] = flt_arpt.fleetmix * flt_arpt.annual_operations
+    assert np.allclose(flt_arpt.groupby("facility_id").fleetmix.sum().values, 1)
+    assert np.allclose(flt_arpt.groupby("facility_id").ops.sum().values,
+                       flt_arpt.groupby("facility_id").annual_operations.mean().values)
     flt_arpt["Equipment Type"] = (
         flt_arpt.airpl_heli_lab.str.lower() + "/" + flt_arpt.engine_code.str.lower()
     )
     flt_arpt.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
-    # Reassign number of operations based on the fleetmix data. We are using
-    # AEDT output only as ERLT.
-    flt_arpt["ops"] = flt_arpt.annual_operations * flt_arpt.fleetmix
+    # Recompute fleetmix to account for missing airframe profiles in the AEDT
+    # model.
     flt_arpt["ltos"] = flt_arpt.annual_operations * flt_arpt.fleetmix / 2
 
     assert flt_arpt.airpl_heli_lab.isna().sum() == 0

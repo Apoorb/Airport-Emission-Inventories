@@ -92,7 +92,8 @@ for file in tti_files:
             df_arfm_eng_lookup.airframe_id.isna().sum() == 0
         ), "Remove GSE equipments."
         df = df.merge(df_arfm_eng_lookup, on="Equipment Type", how="left")
-
+    # Cessna Float is an amphibious airplane. Remove it from here.
+    df = df.loc[lambda df: df.arfm_mod != "Cessna 182 Float"]
     ops_2019_fil_fac = ops_2019_fil.loc[lambda df: df.facility_id == facility_id]
     df["facility_id"] = ops_2019_fil_fac["facility_id"].values[0]
     df["facility_name"] = ops_2019_fil_fac["facility_name"].values[0]
@@ -112,6 +113,7 @@ for file in tti_files:
         ["Climb Below Mixing Height", "Descend Below Mixing Height", "GSE LTO", "APU"],
         np.nan,
     )
+    df.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
     df.rename(columns={"Num Ops": "ltos"}, inplace=True)
     df_fil = df.loc[df["Mode"] != "nan"]
     df_ltos = (
@@ -124,6 +126,9 @@ for file in tti_files:
         .agg(tot_ops=("ops", "sum"), annual_operations=("annual_operations", "first"))
         .reset_index()
     )
+
+    # Corrects for rounding error. Also, need to reassign Cessna 182 Float
+    # ops (as it was removed) to other equipment.
     fac_opscor = df_ltos_agg.annual_operations / df_ltos_agg.tot_ops
 
     df_fil_1 = df_fil
@@ -139,7 +144,16 @@ for file in tti_files:
     emis = df_fil_1
     flt = df_lto_2.sort_values("ops", ascending=False).reset_index(drop=True)
     flt["fleetmix"] = flt["ops"] / flt["annual_operations"]
-    flt.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
+    assert all(
+        ~flt.duplicated(["facility_id", "Equipment Type"]).values
+    ), "Dupicates found. Check data."
+    emis = emis.merge(
+        flt[["facility_id", "Equipment Type", "fleetmix"]],
+        on=["facility_id", "Equipment Type"],
+        how="left",
+    )
+
+    # FixMe: Find a way to assign the fleetmix to the emis dataframe.
 
     flt_keep_cols = [
         "facility_id",
