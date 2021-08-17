@@ -148,7 +148,7 @@ for file in tti_files:
         ~flt.duplicated(["facility_id", "Equipment Type"]).values
     ), "Dupicates found. Check data."
     emis = emis.merge(
-        flt[["facility_id", "Equipment Type", "fleetmix"]],
+        flt[["facility_id", "Equipment Type", "fleetmix", "ops"]],
         on=["facility_id", "Equipment Type"],
         how="left",
     )

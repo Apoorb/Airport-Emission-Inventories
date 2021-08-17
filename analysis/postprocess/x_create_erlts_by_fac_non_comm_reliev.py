@@ -379,13 +379,16 @@ def getarptemis(
             None,
         )
     # Adjust fleetmix and operations after removing missing airframesm+engines.
-    flt_arpt["fleetmix_sum"] = flt_arpt.groupby(
-        "facility_id").fleetmix.transform("sum")
+    # Remove Cessna 182 float
+    flt_arpt = flt_arpt.loc[lambda df: df.arfm_mod != "Cessna 182 Float"]
+    flt_arpt["fleetmix_sum"] = flt_arpt.groupby("facility_id").fleetmix.transform("sum")
     flt_arpt["fleetmix"] = flt_arpt.fleetmix / flt_arpt.fleetmix_sum
     flt_arpt["ops"] = flt_arpt.fleetmix * flt_arpt.annual_operations
     assert np.allclose(flt_arpt.groupby("facility_id").fleetmix.sum().values, 1)
-    assert np.allclose(flt_arpt.groupby("facility_id").ops.sum().values,
-                       flt_arpt.groupby("facility_id").annual_operations.mean().values)
+    assert np.allclose(
+        flt_arpt.groupby("facility_id").ops.sum().values,
+        flt_arpt.groupby("facility_id").annual_operations.mean().values,
+    )
     flt_arpt["Equipment Type"] = (
         flt_arpt.airpl_heli_lab.str.lower() + "/" + flt_arpt.engine_code.str.lower()
     )
@@ -402,7 +405,21 @@ def getarptemis(
         "Equipment Type"
     ].str.lower()
 
-    emis_arpt = flt_arpt.merge(aedt_erlt_1_[analyfac], on="Equipment Type", how="left")
+    # Remove 4 duplicated Cessna 182 airframes. This occured becuase Apoorb
+    # changed Cessna 182 floats to Cessna 182 in AEDT 3d.
+    aedt_erlt_df_aircraft = aedt_erlt_1_[analyfac].loc[
+        lambda df: ~df.Mode.isin(["GSE LTO", "APU"])
+    ]
+    aedt_erlt_df_aircraft_fil = aedt_erlt_df_aircraft.drop_duplicates(
+        ["Departure Airport", "Equipment Type", "Mode"]
+    )
+    assert len(aedt_erlt_df_aircraft_fil) in [
+        len(aedt_erlt_df_aircraft),
+        len(aedt_erlt_df_aircraft) - 2,
+    ]
+    emis_arpt = flt_arpt.merge(
+        aedt_erlt_df_aircraft_fil, on="Equipment Type", how="left"
+    )
     # test = emis_arpt[emis_arpt["CO (ST)"].isna()].drop_duplicates(
     #     ["airframe_id", "engine_id"]
     # )
