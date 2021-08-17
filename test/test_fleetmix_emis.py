@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from airportei.utilis import PATH_PROCESSED, PATH_INTERIM
+from airportei.utilis import PATH_PROCESSED, PATH_INTERIM, PATH_RAW, get_snake_case_dict
 
 # FixME: Clean up the global variables---more to pytest fixtures.
 path_ops2019_clean = Path.home().joinpath(
@@ -19,6 +19,7 @@ path_out_emis_non_comm_rel = Path.home().joinpath(
 path_out_flt_non_comm_rel = Path.home().joinpath(
     PATH_PROCESSED, "fleet_non_comm_reliev.xlsx"
 )
+path_tfmsc_fleetmix = Path.home().joinpath(PATH_RAW, "madhu_files", "FAA_2019TFMSC.csv")
 
 emis_comm_rel = pd.read_excel(path_out_emis_comm_rel)
 flt_comm_rel = pd.read_excel(path_out_flt_comm_rel)
@@ -26,6 +27,7 @@ emis_non_comm_rel = pd.read_excel(path_out_emis_non_comm_rel)
 flt_non_comm_rel = pd.read_excel(path_out_flt_non_comm_rel)
 flt_df = pd.concat([flt_comm_rel, flt_non_comm_rel])
 emis_df = pd.concat([emis_comm_rel, emis_non_comm_rel])
+input_fleetmix = pd.read_csv(path_tfmsc_fleetmix)
 
 
 def test_all_fac_id_present():
@@ -101,29 +103,51 @@ def test_emis_unique_cats_eq_4():
         ).facility_id.transform("count")
         != 4
     )
-    t1 = emis_df_fil.loc[mask]
-    t1["counts"] = (
-        t1.groupby(["facility_id", "airframe_id", "engine_id", "tfmsc_aircraft_id"])
-        .facility_id.transform("count")
-        .values
-    )
-    t1.sort_values(
-        ["facility_id", "airframe_id", "engine_id", "tfmsc_aircraft_id"], inplace=True
-    )
-    all(
-        emis_df.groupby(
+    assert all(
+        emis_df_fil.groupby(
             ["facility_id", "airframe_id", "engine_id", "tfmsc_aircraft_id"]
         ).facility_id.count()
-        == 4
-    )
-    all(
-        emis_df.groupby(["facility_id", "tfmsc_aircraft_id"]).facility_id.count().values
         == 4
     )
 
 
 def test_fleetmix_approx_eq_tfmsc():
-    ...
+    """
+    Test that the fleetmix is approximately equal to tfmsc data for the
+    airports in TFMSC.
+    """
+    final_aircraft_ids = flt_df.tfmsc_aircraft_id.unique()
+    input_fleetmix_1 = (
+        input_fleetmix
+        .rename(columns=get_snake_case_dict(input_fleetmix))
+        .rename(columns={"location_id": "facility_id", "aircraft_id":
+            "aircraft_id_temp"})
+        .groupby(["facility_id", "aircraft_id_temp"])
+        .agg(aircraft_ops=("total_ops", "sum")).reset_index()
+        .assign(
+            facility_id=lambda df: df.facility_id.str.lower().str.strip(),
+            aircraft_id=lambda df: df.aircraft_id_temp.str.lower().str.strip(),
+        )
+        .loc[lambda df: df.aircraft_id.isin(final_aircraft_ids)]
+        .assign(
+            annual_ops=lambda df: df.groupby(
+                    "facility_id").aircraft_ops.transform(sum),
+            fleetmix=lambda df: df.aircraft_ops / df.annual_ops
+            )
+    )
+    flt_df_1 = flt_df.rename(columns={"tfmsc_aircraft_id": "aircraft_id"},
+            ).loc[:, ["facility_id", "aircraft_id", "fleetmix"]]
+    test_df = flt_df_1.merge(
+        input_fleetmix_1,
+        on=["facility_id", "aircraft_id"],
+        suffixes=["_postp", "_input"],
+    )
+    test_df["abs_diff_flt_mx"] = np.abs(test_df.fleetmix_input -
+                                 test_df.fleetmix_postp)
+    test_df["per_diff_flt_mx"] = (test_df.abs_diff_flt_mx * 100/
+                                  test_df.fleetmix_input)
+    test_df_fil = test_df.loc[test_df.per_diff_flt_mx > 5]
+    np.quantile(test_df_fil.fleetmix_input * 100, 0.95)
 
 
 def test_farm_and_ranch_fleetmix_eq_0_2():
