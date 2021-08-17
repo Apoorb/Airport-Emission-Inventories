@@ -55,9 +55,9 @@ point678910_fil = point678910.loc[
     lambda df: (df.state == "TX") & (df.scc.isin(sccdict.keys()))
 ]
 
-point678910_fil_dfw = point678910_fil.loc[lambda df:
-df.agency_facility_id.str.lower() ==
-                                                     "dfw"]
+point678910_fil_dfw = point678910_fil.loc[
+    lambda df: df.agency_facility_id.str.lower() == "dfw"
+]
 fac_map = point678910_fil.drop_duplicates(["eis_facility_id", "agency_facility_id"])
 
 

@@ -159,7 +159,7 @@ for file in tti_files:
         "ltos",
         "filled_from_facility_id",
         "filled_from_facility_ops_per_diff",
-        "source"
+        "source",
     ]
 
     flt_fil = flt.filter(items=flt_keep_cols)

@@ -51,9 +51,6 @@ if __name__ == "__main__":
     )
     ttipolspeciatefil.to_excel(path_speciation_out1, index=False)
 
-
-
-
     # Get speciation from speciate database.
     path_speicate_db = (
         r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data"
@@ -99,4 +96,3 @@ if __name__ == "__main__":
             "weight_percent",
         ]
     )
-

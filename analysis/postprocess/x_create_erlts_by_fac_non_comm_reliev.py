@@ -165,8 +165,10 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
             ]
             .merge(eng_df_1, on="engine_id", how="left")
         )
-        flt_heli["source"] = ("Apoorb used 3 generic helicopters based on: "
-                              "https://www.helis.com/database/org/Texas-Helicopters/.")
+        flt_heli["source"] = (
+            "Apoorb used 3 generic helicopters based on: "
+            "https://www.helis.com/database/org/Texas-Helicopters/."
+        )
     flt_heli["Equipment Type"] = flt_heli.anp_helicopter_id + "/" + flt_heli.engine_code
     flt_heli["ops"] = flt_heli.annual_operations * flt_heli.fleetmix
     flt_heli["ltos"] = flt_heli.annual_operations * flt_heli.fleetmix / 2
@@ -196,7 +198,7 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
         "ltos",
         "filled_from_facility_id",
         "filled_from_facility_ops_per_diff",
-        "source"
+        "source",
     ]
 
     emis_keep_cols = [
@@ -249,8 +251,9 @@ def getheliemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac="med_heli"):
     return flt_heli_fil, emis_heli_fil
 
 
-def create_fandr_flt(opsdict_, aedt_erlt_1_, flt_tabs_, fil_source_,
-                     analyfac="fandr_arpt"):
+def create_fandr_flt(
+    opsdict_, aedt_erlt_1_, flt_tabs_, fil_source_, analyfac="fandr_arpt"
+):
     """
     Create farm and ranch fleetmix.
     """
@@ -294,8 +297,9 @@ def create_fandr_flt(opsdict_, aedt_erlt_1_, flt_tabs_, fil_source_,
     return flt_arpt_
 
 
-def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_,
-                fil_source_):
+def getarptemis(
+    opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_, fil_source_
+):
     """
     Create emission rates for f2 farm and ranch airports, f4 military
     airports, f6 other private airports, f8 other
@@ -320,7 +324,7 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_,
             aedt_erlt_1_=aedt_erlt_1_,
             flt_tabs_=flt_tabs_,
             analyfac=analyfac,
-            fil_source_=fil_source_
+            fil_source_=fil_source_,
         )
     else:
         flt_arpt = (
@@ -339,7 +343,7 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_,
                     "fleetmix",
                     "annual_operations",
                     "filled_from_facility_id",
-                    "ops_per_diff"
+                    "ops_per_diff",
                 ],
             )
             .rename(columns={"ops_per_diff": "filled_from_facility_ops_per_diff"})
@@ -367,10 +371,12 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_,
         )
         flt_arpt.filled_from_facility_id.isna().sum()
         flt_arpt["source"] = np.select(
-            [flt_arpt.filled_from_facility_id.isna(),
-             ~ flt_arpt.filled_from_facility_id.isna()],
+            [
+                flt_arpt.filled_from_facility_id.isna(),
+                ~flt_arpt.filled_from_facility_id.isna(),
+            ],
             ["TFMSC", fil_source_],
-            None
+            None,
         )
     # Adjust fleetmix and operations after removing missing airframes+engines.
     flt_arpt = flt_arpt.assign(
@@ -420,7 +426,7 @@ def getarptemis(opsdict_, aedt_erlt_1_, flt_tabs_, analyfac, arfm_eng_omits_,
         "ltos",
         "filled_from_facility_id",
         "filled_from_facility_ops_per_diff",
-        "source"
+        "source",
     ]
 
     emis_keep_cols = [
@@ -655,8 +661,7 @@ if __name__ == "__main__":
         flt_tabs_=flt_tabs,
         analyfac="fandr_arpt",
         arfm_eng_omits_=arfm_eng_omits_fandr,
-        fil_source_=("Madhu used generic fleetmix for all farm and "
-                 "ranch airports.")
+        fil_source_=("Madhu used generic fleetmix for all farm and " "ranch airports."),
     )
     # f4
     flt["mil_arpt"], emis_rt["mil_arpt"] = getarptemis(
@@ -665,8 +670,10 @@ if __name__ == "__main__":
         flt_tabs_=flt_tabs,
         analyfac="mil_arpt",
         arfm_eng_omits_=arfm_eng_omits_mil,
-        fil_source_=("Apoorb used military airports in the same district to fill "
-                 "the military airport fleet mix data")
+        fil_source_=(
+            "Apoorb used military airports in the same district to fill "
+            "the military airport fleet mix data"
+        ),
     )
     # f6
     flt["opra_arpt"], emis_rt["opra_arpt"] = getarptemis(
@@ -675,11 +682,13 @@ if __name__ == "__main__":
         flt_tabs_=flt_tabs,
         analyfac="opra_arpt",
         arfm_eng_omits_=[None],
-        fil_source_=("Apoorb used other public airports with the lowest "
-                 "operations to get fleet mix for other airports. No other "
-                 "private airport had data. Apoorb has assumed that the other "
-                 "public airport with lowest operation is represntative of "
-                 "other private airports.")
+        fil_source_=(
+            "Apoorb used other public airports with the lowest "
+            "operations to get fleet mix for other airports. No other "
+            "private airport had data. Apoorb has assumed that the other "
+            "public airport with lowest operation is represntative of "
+            "other private airports."
+        ),
     )
     # f8
     flt["opua_arpt"], emis_rt["opua_arpt"] = getarptemis(
@@ -688,12 +697,14 @@ if __name__ == "__main__":
         flt_tabs_=flt_tabs,
         analyfac="opua_arpt",
         arfm_eng_omits_=arfm_eng_omits_opua,
-        fil_source_=("Apoorb used other public airports with the lowest "
-                 "operations to get fleet mix for other airports. No other "
-                 "private airport had data. Apoorb has assumed that the other "
-                 "public airport with lowest operation is representative of "
-                 "other public airports that were likely minor and thus did "
-                 "not get included in TFMSC.")
+        fil_source_=(
+            "Apoorb used other public airports with the lowest "
+            "operations to get fleet mix for other airports. No other "
+            "private airport had data. Apoorb has assumed that the other "
+            "public airport with lowest operation is representative of "
+            "other public airports that were likely minor and thus did "
+            "not get included in TFMSC."
+        ),
     )
     # f10
     flt["tasp_arpt"], emis_rt["tasp_arpt"] = getarptemis(
@@ -702,8 +713,10 @@ if __name__ == "__main__":
         flt_tabs_=flt_tabs,
         analyfac="tasp_arpt",
         arfm_eng_omits_=arfm_eng_omits_tasp,
-        fil_source_=("Used military airports in the same district to fill "
-                 "the military airport fleet mix data")
+        fil_source_=(
+            "Used military airports in the same district to fill "
+            "the military airport fleet mix data"
+        ),
     )
 
     flt_fin = pd.concat(flt.values())
