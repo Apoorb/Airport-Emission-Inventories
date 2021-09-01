@@ -133,7 +133,10 @@ if __name__ == "__main__":
         "ops_impute_annual",
     ] = 110  # Based on Other private airport data. 110 looked like a
     # conservative estimate for small airport.
-
+    path_data_imputation = Path.home().joinpath(
+        PATH_INTERIM, "report", "ops2019_imputation.xlsx"
+    )
+    miss_ops2019_1.to_excel(path_data_imputation, index=False)
     # Get annual to summer conversion factors from Madhu's QAQC 2019 Ops
     # spreadsheet.
     annual_to_summer = pd.DataFrame(

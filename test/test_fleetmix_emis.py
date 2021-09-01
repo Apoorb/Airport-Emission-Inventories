@@ -9,7 +9,7 @@ path_ops2019_clean = Path.home().joinpath(
 )
 ops_2019 = pd.read_excel(path_ops2019_clean, index_col=0)
 ops_2019_fil = ops_2019.loc[lambda df: (~df.facility_type.isin(["GLIDERPORT"]))]
-EXPECTED_FAC_IDS = ops_2019_fil.facility_id.unique()
+# expected_fac_ids = ops_2019_fil.facility_id.unique()
 
 path_out_emis_comm_rel = Path.home().joinpath(PATH_PROCESSED, "emis_comm_reliev.xlsx")
 path_out_flt_comm_rel = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_reliev.xlsx")
@@ -26,11 +26,11 @@ flt_comm_rel = pd.read_excel(path_out_flt_comm_rel)
 emis_non_comm_rel = pd.read_excel(path_out_emis_non_comm_rel)
 flt_non_comm_rel = pd.read_excel(path_out_flt_non_comm_rel)
 flt_df = pd.concat([flt_comm_rel, flt_non_comm_rel])
-emis_df = pd.concat([emis_comm_rel, emis_non_comm_rel])
 input_fleetmix = pd.read_csv(path_tfmsc_fleetmix)
+emis_df = pd.concat([emis_comm_rel, emis_non_comm_rel])
 
 
-def test_all_fac_id_present():
+def test_all_fac_id_present(expected_fac_ids=2032):
     """
     There are 2,032 operational airport facilities in Texas. 5010 data shows
     2,037 airports. We have not considered the 5 GLIDERPORT in this
@@ -39,7 +39,7 @@ def test_all_fac_id_present():
     comm_rel_fac = emis_comm_rel.facility_id.unique()
     non_comm_rel_fac = emis_non_comm_rel.facility_id.unique()
     fac_output = set(comm_rel_fac).union(non_comm_rel_fac)
-    assert fac_output == set(EXPECTED_FAC_IDS)
+    assert fac_output == set(expected_fac_ids)
 
 
 def test_all_fleetmix_in_flt_eq_1():
@@ -118,34 +118,33 @@ def test_fleetmix_approx_eq_tfmsc():
     """
     final_aircraft_ids = flt_df.tfmsc_aircraft_id.unique()
     input_fleetmix_1 = (
-        input_fleetmix
-        .rename(columns=get_snake_case_dict(input_fleetmix))
-        .rename(columns={"location_id": "facility_id", "aircraft_id":
-            "aircraft_id_temp"})
+        input_fleetmix.rename(columns=get_snake_case_dict(input_fleetmix))
+        .rename(
+            columns={"location_id": "facility_id", "aircraft_id": "aircraft_id_temp"}
+        )
         .groupby(["facility_id", "aircraft_id_temp"])
-        .agg(aircraft_ops=("total_ops", "sum")).reset_index()
+        .agg(aircraft_ops=("total_ops", "sum"))
+        .reset_index()
         .assign(
             facility_id=lambda df: df.facility_id.str.lower().str.strip(),
             aircraft_id=lambda df: df.aircraft_id_temp.str.lower().str.strip(),
         )
         .loc[lambda df: df.aircraft_id.isin(final_aircraft_ids)]
         .assign(
-            annual_ops=lambda df: df.groupby(
-                    "facility_id").aircraft_ops.transform(sum),
-            fleetmix=lambda df: df.aircraft_ops / df.annual_ops
-            )
+            annual_ops=lambda df: df.groupby("facility_id").aircraft_ops.transform(sum),
+            fleetmix=lambda df: df.aircraft_ops / df.annual_ops,
+        )
     )
-    flt_df_1 = flt_df.rename(columns={"tfmsc_aircraft_id": "aircraft_id"},
-            ).loc[:, ["facility_id", "aircraft_id", "fleetmix"]]
+    flt_df_1 = flt_df.rename(columns={"tfmsc_aircraft_id": "aircraft_id"}).loc[
+        :, ["facility_id", "aircraft_id", "fleetmix"]
+    ]
     test_df = flt_df_1.merge(
         input_fleetmix_1,
         on=["facility_id", "aircraft_id"],
         suffixes=["_postp", "_input"],
     )
-    test_df["abs_diff_flt_mx"] = np.abs(test_df.fleetmix_input -
-                                 test_df.fleetmix_postp)
-    test_df["per_diff_flt_mx"] = (test_df.abs_diff_flt_mx * 100/
-                                  test_df.fleetmix_input)
+    test_df["abs_diff_flt_mx"] = np.abs(test_df.fleetmix_input - test_df.fleetmix_postp)
+    test_df["per_diff_flt_mx"] = test_df.abs_diff_flt_mx * 100 / test_df.fleetmix_input
     test_df_fil = test_df.loc[test_df.per_diff_flt_mx > 5]
     np.quantile(test_df_fil.fleetmix_input * 100, 0.95)
 

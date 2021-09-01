@@ -4,23 +4,23 @@ Test emissions for commercial airports match between TTI and ERG.
 
 import numpy as np
 import pandas as pd
-from airportei.utilis import PATH_RAW, PATH_PROCESSED, get_snake_case_dict
+from airportei.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
 from pathlib import Path
 
 
 path_erg = Path.home().joinpath(PATH_RAW, "madhu_files", "ERG_2017.csv")
-path_tti_comm_releiv = (
+path_tti_comm_reliev = (
     r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed"
-    r"\emis_comm_releiv.xlsx"
+    r"\emis_comm_reliev.xlsx"
 )
 
-path_tti_non_comm_releiv = (
+path_tti_non_comm_reliev = (
     r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed"
-    r"\emis_non_comm_releiv.xlsx"
+    r"\emis_non_comm_reliev.xlsx"
 )
+path_proj_fac = Path.home().joinpath(PATH_INTERIM, "proj_fac_axb_07_11_2021.xlsx")
 
-
-tti_files = [path_tti_comm_releiv, path_tti_non_comm_releiv]
+tti_files = [path_tti_comm_reliev, path_tti_non_comm_reliev]
 
 erg_df = pd.read_csv(path_erg)
 erg_df_1 = erg_df.rename(columns=get_snake_case_dict(erg_df)).rename(
@@ -69,10 +69,8 @@ for file in tti_files:
         ["Aircraft", "Aircraft", "GSE LTO", "APU"],
         np.nan,
     )
-    df_fil = df.loc[df["mode"] != "nan"]
-
-    df_fil.loc[df_fil["mode"].isin(["GSE LTO", "APU"]), "equipment_type"] = "nan"
-
+    # df_fil = df.loc[~ df_fil["mode"].isin(["GSE LTO", "APU"])]
+    df_fil = df
     df_1_detailed = (
         df_fil.assign(
             co_st_=lambda df: df.co_st_ * df.ltos,
@@ -162,12 +160,24 @@ for file in tti_files:
     )
 
     df_3_detailed = (
-        df_1_detailed.set_index(["facility_id", "mode", "equipment_type"])
+        df_1_detailed.set_index(
+            [
+                "facility_id",
+                "facility_group",
+                "facility_type",
+                "facility_name",
+                "mode",
+                "equipment_type",
+            ]
+        )
         .stack()
         .reset_index()
     )
     df_3_detailed.columns = [
         "facility_id",
+        "facility_group",
+        "facility_type",
+        "facility_name",
         "mode",
         "equipment_type",
         "eis_pollutant_id",
@@ -183,12 +193,34 @@ for file in tti_files:
 tti_df = pd.concat(list_df)
 tti_df_detailed = pd.concat(list_df_detailed)
 
-assert len(tti_df.drop_duplicates(["facility_group", "facility_id"])) == 2032
+x1 = pd.ExcelFile(path_proj_fac)
+proj_fac = pd.concat(map(x1.parse, x1.sheet_names))
+proj_fac_17 = proj_fac.loc[proj_fac.sysyear == 2017].filter(
+    items=["facility_id", "proj_fac"]
+)
+
+tti_df_17 = (
+    tti_df.merge(proj_fac_17, on="facility_id", how="left")
+    .rename(
+        columns={
+            "lto": "lto_tmp",
+            "emis_tons": "emis_tons_tmp",
+            "emis_per_lto": "emis_per_lto_tmp",
+        }
+    )
+    .assign(
+        lto=lambda df: df.lto_tmp * df.proj_fac,
+        emis_tons=lambda df: df.emis_tons_tmp.astype(float) * df.proj_fac,
+        emis_per_lto=lambda df: df.emis_per_lto_tmp.astype(float) * df.proj_fac,
+    )
+)
+
+assert len(tti_df_detailed.drop_duplicates(["facility_group", "facility_id"])) == 2032
 
 erg_df_2.eis_pollutant_id.replace("PM10-PRI", "pm10", inplace=True)
 erg_df_2.eis_pollutant_id.replace("PM25-PRI", "pm25", inplace=True)
 
-tti_erg_df = tti_df.merge(
+tti_erg_df = tti_df_17.merge(
     erg_df_2,
     on=["facility_id", "mode", "eis_pollutant_id"],
     suffixes=["_tti", "_erg"],

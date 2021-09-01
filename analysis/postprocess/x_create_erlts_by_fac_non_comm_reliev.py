@@ -733,8 +733,8 @@ if __name__ == "__main__":
         analyfac="tasp_arpt",
         arfm_eng_omits_=arfm_eng_omits_tasp,
         fil_source_=(
-            "Used military airports in the same district to fill "
-            "the military airport fleet mix data"
+            "Used TASP airports in the same district to fill "
+            "the TASP airport fleet mix data"
         ),
     )
 

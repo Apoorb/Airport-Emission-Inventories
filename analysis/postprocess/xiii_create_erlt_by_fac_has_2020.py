@@ -19,21 +19,14 @@ ops_2019_fil = ops_2019.loc[
 path_tti_com = (
     r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
     r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI"
-    r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2019"
-    r"\bakFile_metricResults\Commercial"
+    r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2020"
+    r"\bakFile_metricResults"
 )
-path_tti_rel = (
-    r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
-    r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI"
-    r"\Tasks\Task5_ Statewide_2020_AERR_EI\aedt_ems_2019"
-    r"\bakFile_metricResults\Reliever"
-)
-path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_comm_reliev.xlsx")
-path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_reliev.xlsx")
 
-tti_files = [file for file in Path(path_tti_com).glob("*.csv")] + [
-    file for file in Path(path_tti_rel).glob("*.csv")
-]
+path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_has_2020.xlsx")
+path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_has_2020.xlsx")
+
+tti_files = [file for file in Path(path_tti_com).glob("*.csv")]
 
 pathasifinput = Path(
     r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
@@ -67,8 +60,8 @@ for file in tti_files:
         asif_in["User ID"] = asif_in["op_type"] + asif_in["ids"].astype(str)
         df = df.merge(asif_in, on="User ID", how="left")
         df["source"] = "TFMSC"
-        df["annual_operations"] = ops_2019_fil_fac["annual_operations"].values[0]
-
+        df["annual_operations"] = ops_2019_fil_fac["annual_operations"].values[
+            0]
     else:
         flt_tabs = get_flt_db_tabs()
         df_arfm_eng_lookup = pd.DataFrame(
@@ -90,6 +83,9 @@ for file in tti_files:
         df_arfm_eng_lookup.loc[
             lambda df: df.arfm_mod == "EC130", ["airframe_id"]
         ] = 5177
+        df_arfm_eng_lookup.loc[
+            lambda df: df.arfm_mod == "B407", ["airframe_id"]
+        ] = 5079
         # df_arfm_eng_lookup.loc[lambda df: df.arfm_mod == "EC130",
         # "airframe_id"] = 5177
         assert (
@@ -100,8 +96,10 @@ for file in tti_files:
         df_ops_has = (
             df.loc[df.Mode.isin(["Climb Below Mixing Height",
                                  "Descend Below Mixing Height"
-                                 ])]
+            ])]
         )
+        # Both arrival and departures have climb and descend. Need to divide
+        # by 2.
         df["annual_operations"] = df_ops_has["Num Ops"].sum() / 2
     # Cessna Float is an amphibious airplane. Remove it from here.
     df = df.loc[lambda df: df.arfm_mod != "Cessna 182 Float"]
@@ -144,7 +142,6 @@ for file in tti_files:
     df_fil_1["ltos"] = df_fil_1["ltos"] * fac_opscor.values[0]
     df_lto_2["ltos"] = df_lto_2["ltos"] * fac_opscor.values[0]
     df_lto_2["ops"] = df_lto_2["ops"] * fac_opscor.values[0]
-
     if facility_id not in ["hou", "iah", "efd"]:
         assert np.isclose(
             df_lto_2.ops.sum(), ops_2019_fil_fac["annual_operations"].values[0]
