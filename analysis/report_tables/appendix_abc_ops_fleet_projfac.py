@@ -36,7 +36,7 @@ rename_col = {
     .replace("Otherservices", "Other Services")
     for col in columns
 }
-
+raise "Change IAH, HOU, and EFD ops based on the HAS values."
 path_op_out = Path.home().joinpath(
     PATH_PROCESSED, "report_tables", "Appendix A 2019 Operations.xlsx"
 )
@@ -67,7 +67,7 @@ new_cols = {col: inflection.titleize(col).replace("Tfmsc", "TFMSC") for col in c
 flt_fil = flt.filter(items=cols).rename(columns=new_cols)
 
 path_flt_out = Path.home().joinpath(
-    PATH_PROCESSED, "report_tables", "Appendix " "B 2019 " "Fleet Mix" ".xlsx"
+    PATH_PROCESSED, "report_tables", "Appendix B 2019 Fleet Mix.xlsx"
 )
 flt_fil.to_excel(path_flt_out, index=False)
 
