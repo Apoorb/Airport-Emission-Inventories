@@ -68,10 +68,10 @@ def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
 
 
 path_emis_fl = Path(
-    r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
-    r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI\Tasks"
-    r"\Task5_ Statewide_2020_AERR_EI\Data_Code\Airport_EIS_Formatted"
-    r"\EIS_9_15_21\Airport_EIS_2020_R.txt"
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute\HMP - TCEQ "
+    r"Projects - Documents\2020 Texas Statewide Airport EI\Tasks\Task5_ "
+    r"Statewide_2020_AERR_EI\Data_Code\Airport_EIS_Formatted\EIS_10_12_21"
+    r"\Airport_EIS_2017_2020\Airport_EIS_2020.txt"
 )
 
 emisdf20 = pd.read_csv(path_emis_fl, sep="\t")
@@ -98,7 +98,7 @@ emisdf20_cntr = get_emis_by_scc(
 )
 
 path_out = Path.home().joinpath(
-    PATH_PROCESSED, "report_tables", "tx_emis_uncntr_sum_R.xlsx"
+    PATH_PROCESSED, "report_tables", "tx_emis_statewide_sum.xlsx"
 )
 
 with pd.ExcelWriter(path_out) as f:

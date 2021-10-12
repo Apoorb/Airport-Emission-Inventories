@@ -16,7 +16,7 @@ Created on: 8/7/2021
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from analysis.preprocess.vii_prepare_ops_for_asif import get_flt_db_tabs
+from analysis.preprocess.vi_prepare_ops_for_asif import get_flt_db_tabs
 from airportei.utilis import PATH_PROCESSED, PATH_INTERIM
 
 

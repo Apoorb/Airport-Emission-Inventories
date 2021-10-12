@@ -7,7 +7,7 @@ import numpy as np
 import pathlib
 from pathlib import Path
 from airportei.utilis import PATH_INTERIM
-from analysis.preprocess.vii_prepare_ops_for_asif import (
+from analysis.preprocess.vi_prepare_ops_for_asif import (
     get_flt_db_tabs,
     add_eng_arfm_equip_cols,
     add_apu_nms,
