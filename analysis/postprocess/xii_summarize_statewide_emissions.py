@@ -10,15 +10,22 @@ import pandas as pd
 from airportei.utilis import PATH_INTERIM, PATH_PROCESSED
 
 
-def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
-    emisdf20_fil_agg_pivot_uncntr = pd.pivot(
+def get_emis_by_scc(emisdf20_fil_agg_,
+                    val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
+    if "County" in emisdf20_fil_agg_.columns:
+        index_=["County", "SCC", "SCC_Description"]
+    else:
+        index_=["SCC", "SCC_Description"]
+
+    emisdf20_fil_agg_pivot = pd.pivot(
         emisdf20_fil_agg_,
-        index=["SCC", "SCC_Description"],
+        index=index_,
         columns="EIS_Pollutant_ID",
         values=val_col,
     ).reset_index()
 
     old_nms = [
+        "County",
         "SCC",
         "SCC_Description",
         "VOC",
@@ -30,6 +37,7 @@ def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
         "Pb",
     ]
     new_nms = [
+        "County",
         "SCC Code",
         "SCC Description",
         "VOC",
@@ -43,9 +51,8 @@ def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
     rename_map = {old_nm: new_nm for old_nm, new_nm in zip(old_nms, new_nms)}
 
     emisdf20_fil_agg_pivot_rename = (
-        emisdf20_fil_agg_pivot_uncntr.filter(items=old_nms)
+        emisdf20_fil_agg_pivot.filter(items=old_nms)
         .rename(columns=rename_map)
-        .set_index(["SCC Code", "SCC Description"])
     )
     sort_ord_scc_desc = [
         "Commercial Aviation",
@@ -58,12 +65,15 @@ def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
         "GSE: Gasoline-fueled",
         "GSE: Diesel-fueled",
     ]
-    emisdf20_fil_agg_pivot_rename.sort_index(
-        axis=0,
-        level=1,
-        key=lambda x: pd.Categorical(x, sort_ord_scc_desc),
-        inplace=True,
+    emisdf20_fil_agg_pivot_rename["SCC Description"] = pd.Categorical(
+        emisdf20_fil_agg_pivot_rename["SCC Description"],
+        sort_ord_scc_desc,
+        ordered=True
     )
+    if "County" in emisdf20_fil_agg_pivot_rename.columns:
+        emisdf20_fil_agg_pivot_rename.sort_values(["County", "SCC Description"], inplace=True)
+    else:
+        emisdf20_fil_agg_pivot_rename.sort_values(["SCC Description"], inplace=True)
     return emisdf20_fil_agg_pivot_rename
 
 
@@ -81,7 +91,7 @@ emisdf20_fil = emisdf20.loc[
     lambda df: (df["SCC_Description"] != "GSE: Electric")
     & (df.EIS_Pollutant_ID.isin(["VOC", "NOX", "CO", "PM10", "PM2.5", "SO2", "Pb"]))
 ]
-emisdf20_fil_agg = (
+emisdf20_fil_agg_st = (
     emisdf20_fil.groupby(["SCC", "SCC_Description", "EIS_Pollutant_ID"])
     .agg(
         UNCONTROLLED_ANNUAL_EMIS_ST=("UNCONTROLLED_ANNUAL_EMIS_ST", "sum"),
@@ -90,17 +100,36 @@ emisdf20_fil_agg = (
     .reset_index()
 )
 
-emisdf20_uncntr = get_emis_by_scc(
-    emisdf20_fil_agg_=emisdf20_fil_agg, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"
+emisdf20_fil["County"] = emisdf20_fil["County"].str.title()
+emisdf20_fil_agg_cnty = (
+    emisdf20_fil.groupby(["County", "SCC", "SCC_Description", "EIS_Pollutant_ID"])
+    .agg(
+        UNCONTROLLED_ANNUAL_EMIS_ST=("UNCONTROLLED_ANNUAL_EMIS_ST", "sum"),
+        CONTROLLED_ANNUAL_EMIS_ST=("CONTROLLED_ANNUAL_EMIS_ST", "sum"),
+    )
+    .reset_index()
 )
-emisdf20_cntr = get_emis_by_scc(
-    emisdf20_fil_agg_=emisdf20_fil_agg, val_col="CONTROLLED_ANNUAL_EMIS_ST"
+
+emisdf20_cntr_cnty = get_emis_by_scc(
+    emisdf20_fil_agg_=emisdf20_fil_agg_cnty, val_col="CONTROLLED_ANNUAL_EMIS_ST"
 )
+emisdf20_uncntr_cnty = get_emis_by_scc(
+    emisdf20_fil_agg_=emisdf20_fil_agg_cnty, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"
+)
+emisdf20_cntr_st = get_emis_by_scc(
+    emisdf20_fil_agg_=emisdf20_fil_agg_st, val_col="CONTROLLED_ANNUAL_EMIS_ST"
+)
+emisdf20_uncntr_st = get_emis_by_scc(
+    emisdf20_fil_agg_=emisdf20_fil_agg_st, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"
+)
+
 
 path_out = Path.home().joinpath(
     PATH_PROCESSED, "report_tables", "tx_emis_statewide_sum.xlsx"
 )
 
 with pd.ExcelWriter(path_out) as f:
-    emisdf20_uncntr.to_excel(f, "uncntr")
-    emisdf20_cntr.to_excel(f, "cntr")
+    emisdf20_uncntr_st.to_excel(f, "uncntr_st_2020")
+    emisdf20_cntr_st.to_excel(f, "cntr_st_2020")
+    emisdf20_uncntr_cnty.to_excel(f, "uncntr_cnty_2020")
+    emisdf20_cntr_cnty.to_excel(f, "cntr_cnty_2020")

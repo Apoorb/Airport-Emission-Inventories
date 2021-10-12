@@ -9,11 +9,11 @@ from pathlib import Path
 
 
 path_erg = Path.home().joinpath(PATH_RAW, "madhu_files", "ERG_2017.csv")
-path_emis_fl = (
-    r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
-    r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI\Tasks"
-    r"\Task5_ Statewide_2020_AERR_EI\Data_Code\Airport_EIS_Formatted"
-    r"\EIS_9_15_21\Airport_EIS_2020.txt"
+path_emis_fl = Path(
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute\HMP - TCEQ "
+    r"Projects - Documents\2020 Texas Statewide Airport EI\Tasks\Task5_ "
+    r"Statewide_2020_AERR_EI\Data_Code\Airport_EIS_Formatted\EIS_10_12_21"
+    r"\Airport_EIS_2017_2020\Airport_EIS_2020.txt"
 )
 
 
@@ -33,15 +33,15 @@ df_fil.loc[df_fil.eis_pollutant_id == "PM10", "eis_pollutant_id"] = "PM10-PRI"
 df_fil_1 = (
     df_fil.loc[
         lambda df: df.eis_pollutant_id.isin(
-            ["CO", "CO2", "VOC", "NOX", "SO2", "PM25-PRI", "PM10-PRI"]
+            ["CO", "CO2", "VOC", "NOX", "SO2", "PM25-PRI", "PM10-PRI", 'Pb']
         )
     ]
     .groupby(
         ["facility_id", "facility_group", "airport_tti", "mode", "eis_pollutant_id"]
     )
-    .agg(lto=("lto", "sum"), uncntr_emis_tons=("uncontrolled_annual_emis_st", "sum"))
+    .agg(lto=("lto", "sum"), uncntr_emis_tons=("uncontrolled_annual_emis_st", "sum"),
+         cntr_enis_tons=("controlled_annual_emis_st", "sum"))
     .reset_index()
-    .assign(uncntr_emis_per_lto=lambda df: df.uncntr_emis_tons / df.lto)
 )
 
 tti_df_17 = df_fil_1
@@ -49,4 +49,4 @@ tti_df_17 = df_fil_1
 path_out = Path.home().joinpath(PATH_PROCESSED, "report_tables", "emis_ltos_2020.xlsx")
 
 with pd.ExcelWriter(path_out) as f:
-    tti_df_17.to_excel(f, "uncntr")
+    tti_df_17.to_excel(f, "cntr_uncntr")
