@@ -60,8 +60,7 @@ for file in tti_files:
         asif_in["User ID"] = asif_in["op_type"] + asif_in["ids"].astype(str)
         df = df.merge(asif_in, on="User ID", how="left")
         df["source"] = "TFMSC"
-        df["annual_operations"] = ops_2019_fil_fac["annual_operations"].values[
-            0]
+        df["annual_operations"] = ops_2019_fil_fac["annual_operations"].values[0]
     else:
         flt_tabs = get_flt_db_tabs()
         df_arfm_eng_lookup = pd.DataFrame(
@@ -83,9 +82,7 @@ for file in tti_files:
         df_arfm_eng_lookup.loc[
             lambda df: df.arfm_mod == "EC130", ["airframe_id"]
         ] = 5177
-        df_arfm_eng_lookup.loc[
-            lambda df: df.arfm_mod == "B407", ["airframe_id"]
-        ] = 5079
+        df_arfm_eng_lookup.loc[lambda df: df.arfm_mod == "B407", ["airframe_id"]] = 5079
         # df_arfm_eng_lookup.loc[lambda df: df.arfm_mod == "EC130",
         # "airframe_id"] = 5177
         assert (
@@ -93,11 +90,9 @@ for file in tti_files:
         ), "Remove GSE equipments."
         df = df.merge(df_arfm_eng_lookup, on="Equipment Type", how="left")
         df["source"] = "HAS"
-        df_ops_has = (
-            df.loc[df.Mode.isin(["Climb Below Mixing Height",
-                                 "Descend Below Mixing Height"
-            ])]
-        )
+        df_ops_has = df.loc[
+            df.Mode.isin(["Climb Below Mixing Height", "Descend Below Mixing Height"])
+        ]
         # Both arrival and departures have climb and descend. Need to divide
         # by 2.
         df["annual_operations"] = df_ops_has["Num Ops"].sum() / 2

@@ -77,9 +77,9 @@ proj_fac = pd.concat(map(x1.parse, x1.sheet_names))
 
 rename_cols = {
     "facility_id": "Facility",
-    "facility_name": 'Facility Name',
-    "facility_group": 'Facility Group',
-    "facility_type": 'Facility Type',
+    "facility_name": "Facility Name",
+    "facility_group": "Facility Group",
+    "facility_type": "Facility Type",
     "sysyear": "Year",
     "proj_fac": "Projection Factor",
 }

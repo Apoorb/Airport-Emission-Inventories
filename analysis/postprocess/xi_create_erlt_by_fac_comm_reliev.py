@@ -97,11 +97,9 @@ for file in tti_files:
         ), "Remove GSE equipments."
         df = df.merge(df_arfm_eng_lookup, on="Equipment Type", how="left")
         df["source"] = "HAS"
-        df_ops_has = (
-            df.loc[df.Mode.isin(["Climb Below Mixing Height",
-                                 "Descend Below Mixing Height"
-                                 ])]
-        )
+        df_ops_has = df.loc[
+            df.Mode.isin(["Climb Below Mixing Height", "Descend Below Mixing Height"])
+        ]
         df["annual_operations"] = df_ops_has["Num Ops"].sum() / 2
     # Cessna Float is an amphibious airplane. Remove it from here.
     df = df.loc[lambda df: df.arfm_mod != "Cessna 182 Float"]

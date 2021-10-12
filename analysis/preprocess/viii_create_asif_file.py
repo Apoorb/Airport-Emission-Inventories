@@ -271,17 +271,32 @@ if __name__ == "__main__":
     ass_fac_ids = ["bif", "hpy", "t23"]
     assignDefaultGse = "false"
     fac_ids = ass_fac_ids
+
+    starttime = "2019-01-01T08:00:00"
+    suffix = ""
+    TESTING = True
+    if TESTING:
+        fac_ids = ["dfw"]
+        starttime = "2019-01-01T17:00:00"
+        suffix = "_jan_5pm"
+        starttime = "2019-07-01T08:00:00"
+        suffix = "_jul_8am"
+        starttime = "2019-07-01T17:00:00"
+        suffix = "_jul_5pm"
+        starttime = "2019-01-01T08:00:00"
+        suffix = "_jan_8am"
+
     for fac_id in fac_ids:
         path_xml_temp = Path.home().joinpath(PATH_INTERIM, "template_asif_scenario.xml")
         asif_input_fi = Path.home().joinpath(
             PATH_INTERIM, "asif_xmls", "{}_input_fi.xlsx".format(fac_id)
         )
         asifxml_obj = AsifXml(path_inputs_=asif_input_fi, path_xml_templ_=path_xml_temp)
-
+        asifxml_obj.starttime = starttime
         path_asif_out = Path.home().joinpath(
             PATH_INTERIM,
             "asif_xmls",
-            "{}_scn_asif.xml".format(asifxml_obj.analysis_arpt.lower()),
+            "{}_scn_asif{}.xml".format(asifxml_obj.analysis_arpt.lower(), suffix),
         )
         asifxml_obj.set_tree_trk_layout_ops()
         asifxml_obj.set_scn_meta()

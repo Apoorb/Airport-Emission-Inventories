@@ -39,17 +39,28 @@ if __name__ == "__main__":
         columns={"CAS_NUM": "polcode", "Prof_nm": "prof_nm_aedt"}, inplace=True
     )
     aedtspeciation.rename(columns=get_snake_case_dict(aedtspeciation), inplace=True)
+    test = aedtspeciation.loc[lambda df: df.polcode.isnull()]
 
-    ttipollist = pd.read_excel(path_tti_list)
-    ttipollist.columns = ["pol_nm", "polcode", "basepolfracof"]
-    ttipollist["polcode"] = ttipollist["polcode"].astype(str)
-    ttipolspeciate = ttipollist.merge(
-        aedtspeciation, on=["polcode"], suffixes=["_tti", "_aedt"], how="left"
+    # ttipollist = pd.read_excel(path_tti_list, usecols=['Pollutant*', 'Pollutant Code', 'Base Pollutant (Fraction of)'])
+    # ttipollist.columns = ["pol_nm", "polcode", "basepolfracof"]
+    # ttipollist["polcode"] = ttipollist["polcode"].astype(str)
+    # ttipolspeciate = ttipollist.merge(
+    #     aedtspeciation, on=["polcode"], suffixes=["_tti", "_aedt"], how="outer"
+    # )
+    aedtspeciationfil = aedtspeciation.filter(
+        items=[
+            "prof_id",
+            "polcode",
+            "pol_nm",
+            "massfrac",
+            "speciateid",
+            "caa_hap",
+            "iris_hap",
+            "hc",
+            "voc",
+        ]
     )
-    ttipolspeciatefil = ttipolspeciate.filter(
-        items=["polcode", "pol_nm_tti", "prof_nm_aedt", "massfrac", "speciateid"]
-    )
-    ttipolspeciatefil.to_excel(path_speciation_out1, index=False)
+    aedtspeciationfil.to_excel(path_speciation_out1, index=False)
 
     # Get speciation from speciate database.
     path_speicate_db = (

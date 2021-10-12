@@ -13,8 +13,9 @@ path_emis_fl = (
     r"\HMP - TCEQ Projects - Documents\2020 Texas Statewide Airport EI"
     r"\Tasks\Task5_ Statewide_2020_AERR_EI\Data_Code\Airport_EIS_Formatted"
 )
-path_emis_comm_reliev = Path.home().joinpath(path_emis_fl,
-                                             "County_EIS_Summary_Comm_8_31_21")
+path_emis_comm_reliev = Path.home().joinpath(
+    path_emis_fl, "County_EIS_Summary_Comm_8_31_21"
+)
 path_emis_non_comm_reliev = Path.home().joinpath(
     path_emis_fl, "County_EIS_Summary_Noncomm_8_31_21"
 )
@@ -49,35 +50,32 @@ for path in path_emis_non_comm_reliev.glob("EIS_Info_non_*.txt"):
 emis_non_comm_reliev = pd.concat(ls_non_comm_reliev)
 emisdf = pd.concat([emis_comm_reliev, emis_non_comm_reliev]).reset_index(drop=True)
 rename_map = {
-    'State_Facility_Identifier': "State Facility Identifier",
-    'Airport': 'Airport',
-    'Facility_Group': 'Facility Group',
-    'Facility_Type': 'Facility Type',
-    'County': 'County',
-    'year': 'Year',
-    'FIP': "FIPS",
-    'District': "District",
-    'SCC': 'SCC',
-    'SCC_Description': 'SCC Description',
-    'Airframe': 'Airframe',
-    'Engine': 'Engine',
-    'Mode': 'Mode',
-    'LTOS': "LTOs",
-    'EIS_Pollutant_ID': "EIS Pollutant ID",
-    'UNCONTROLLED_ANNUAL_EMIS_ST': "Uncontrolled Annual Emission ST",
-    'CONTROLLED_ANNUAL_EMIS_ST': "Controlled Annual Emission ST",
-    'UNCONTROLLED_DAILY_EMIS_ST': "Uncontrolled Daily Emission ST",
-    'CONTROLLED_DAILY_EMIS_ST': "Controlled Daily Emission ST",
+    "State_Facility_Identifier": "State Facility Identifier",
+    "Airport": "Airport",
+    "Facility_Group": "Facility Group",
+    "Facility_Type": "Facility Type",
+    "County": "County",
+    "year": "Year",
+    "FIP": "FIPS",
+    "District": "District",
+    "SCC": "SCC",
+    "SCC_Description": "SCC Description",
+    "Airframe": "Airframe",
+    "Engine": "Engine",
+    "Mode": "Mode",
+    "LTOS": "LTOs",
+    "EIS_Pollutant_ID": "EIS Pollutant ID",
+    "UNCONTROLLED_ANNUAL_EMIS_ST": "Uncontrolled Annual Emission ST",
+    "CONTROLLED_ANNUAL_EMIS_ST": "Controlled Annual Emission ST",
+    "UNCONTROLLED_DAILY_EMIS_ST": "Uncontrolled Daily Emission ST",
+    "CONTROLLED_DAILY_EMIS_ST": "Controlled Daily Emission ST",
 }
 
-emisdf_fil = emisdf.filter(items=rename_map.keys()).rename(
-    columns=rename_map)
-path_out = Path.home().joinpath(
-    PATH_PROCESSED, "report_tables", "task6_appendix_e"
-)
+emisdf_fil = emisdf.filter(items=rename_map.keys()).rename(columns=rename_map)
+path_out = Path.home().joinpath(PATH_PROCESSED, "report_tables", "task6_appendix_e")
 
 for nm, grp in emisdf_fil.groupby(["County", "Year"]):
     path_out_fi = Path.home().joinpath(
-        path_out,
-        f"{'_'.join([nm[0], str(nm[1])])}_emission.tsv")
-    grp.to_csv(path_out_fi,  sep="\t", index=False)
+        path_out, f"{'_'.join([nm[0], str(nm[1])])}_emission.tsv"
+    )
+    grp.to_csv(path_out_fi, sep="\t", index=False)

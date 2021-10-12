@@ -58,6 +58,10 @@ point678910_fil = point678910.loc[
 point678910_fil_dfw = point678910_fil.loc[
     lambda df: df.agency_facility_id.str.lower() == "dfw"
 ]
+point678910_fil_iah = point678910_fil.loc[
+    lambda df: df.agency_facility_id.str.lower() == "iah"
+]
+
 fac_map = point678910_fil.drop_duplicates(["eis_facility_id", "agency_facility_id"])
 
 
