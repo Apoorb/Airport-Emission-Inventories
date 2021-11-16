@@ -10,18 +10,14 @@ import pandas as pd
 from airportei.utilis import PATH_INTERIM, PATH_PROCESSED
 
 
-def get_emis_by_scc(emisdf20_fil_agg_,
-                    val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
+def get_emis_by_scc(emisdf20_fil_agg_, val_col="UNCONTROLLED_ANNUAL_EMIS_ST"):
     if "County" in emisdf20_fil_agg_.columns:
-        index_=["County", "SCC", "SCC_Description"]
+        index_ = ["County", "SCC", "SCC_Description"]
     else:
-        index_=["SCC", "SCC_Description"]
+        index_ = ["SCC", "SCC_Description"]
 
     emisdf20_fil_agg_pivot = pd.pivot(
-        emisdf20_fil_agg_,
-        index=index_,
-        columns="EIS_Pollutant_ID",
-        values=val_col,
+        emisdf20_fil_agg_, index=index_, columns="EIS_Pollutant_ID", values=val_col
     ).reset_index()
 
     old_nms = [
@@ -50,9 +46,8 @@ def get_emis_by_scc(emisdf20_fil_agg_,
     ]
     rename_map = {old_nm: new_nm for old_nm, new_nm in zip(old_nms, new_nms)}
 
-    emisdf20_fil_agg_pivot_rename = (
-        emisdf20_fil_agg_pivot.filter(items=old_nms)
-        .rename(columns=rename_map)
+    emisdf20_fil_agg_pivot_rename = emisdf20_fil_agg_pivot.filter(items=old_nms).rename(
+        columns=rename_map
     )
     sort_ord_scc_desc = [
         "Commercial Aviation",
@@ -68,10 +63,12 @@ def get_emis_by_scc(emisdf20_fil_agg_,
     emisdf20_fil_agg_pivot_rename["SCC Description"] = pd.Categorical(
         emisdf20_fil_agg_pivot_rename["SCC Description"],
         sort_ord_scc_desc,
-        ordered=True
+        ordered=True,
     )
     if "County" in emisdf20_fil_agg_pivot_rename.columns:
-        emisdf20_fil_agg_pivot_rename.sort_values(["County", "SCC Description"], inplace=True)
+        emisdf20_fil_agg_pivot_rename.sort_values(
+            ["County", "SCC Description"], inplace=True
+        )
     else:
         emisdf20_fil_agg_pivot_rename.sort_values(["SCC Description"], inplace=True)
     return emisdf20_fil_agg_pivot_rename

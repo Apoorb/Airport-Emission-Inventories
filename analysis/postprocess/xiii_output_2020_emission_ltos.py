@@ -33,14 +33,17 @@ df_fil.loc[df_fil.eis_pollutant_id == "PM10", "eis_pollutant_id"] = "PM10-PRI"
 df_fil_1 = (
     df_fil.loc[
         lambda df: df.eis_pollutant_id.isin(
-            ["CO", "CO2", "VOC", "NOX", "SO2", "PM25-PRI", "PM10-PRI", 'Pb']
+            ["CO", "CO2", "VOC", "NOX", "SO2", "PM25-PRI", "PM10-PRI", "Pb"]
         )
     ]
     .groupby(
         ["facility_id", "facility_group", "airport_tti", "mode", "eis_pollutant_id"]
     )
-    .agg(lto=("lto", "sum"), uncntr_emis_tons=("uncontrolled_annual_emis_st", "sum"),
-         cntr_enis_tons=("controlled_annual_emis_st", "sum"))
+    .agg(
+        lto=("lto", "sum"),
+        uncntr_emis_tons=("uncontrolled_annual_emis_st", "sum"),
+        cntr_enis_tons=("controlled_annual_emis_st", "sum"),
+    )
     .reset_index()
 )
 
