@@ -1,0 +1,35 @@
+
+from pathlib import Path
+import pandas as pd
+
+
+if __name__ == "__main__":
+    path_com = Path(
+        r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\external"
+    )
+    aetc = pd.read_excel(Path.joinpath(path_com, "AETC_Engine_Mode.xlsx"))
+    aetc["code_1"] = aetc.Code - 200000
+    eis_df = pd.read_csv(Path.joinpath(path_com, "fac_conf_proc_unit_18834.csv"))
+    eis_df_aetc = eis_df.merge(aetc, left_on="aetc", right_on="code_1", how="left")
+    eis_df_aetc_nan = eis_df_aetc.loc[eis_df_aetc.code_1.isna()]
+    eis_df_aetc_nan.aetc.unique()
+    eis_df_aetc_nan_999 = eis_df_aetc_nan.loc[lambda df: df.aetc > 300000]
+    eis_df_aetc_nan_999.aetc.unique()
+    eis_df_aetc_nan_1 = eis_df_aetc_nan.loc[lambda df: df.aetc < 300000]
+    eis_df_aetc_nan_nan = eis_df_aetc_nan.loc[lambda df: df.aetc.isna()]
+    len(eis_df_aetc_nan_999) + len(eis_df_aetc_nan_1)
+
+    eis_df_aetc_nan_2 = eis_df_aetc_nan_1.filter(items=['state', 'fips state code', 'tribal name', 'fips code', 'county',
+       'eis facility id', 'program system code', 'agency facility id',
+       'company name', 'site name', 'eis unit id', 'agency unit id',
+       'unit type', 'design cap protected?', 'unit comment',
+       'unit status code', 'unit status year', 'unit operation date',
+       'eis process id', 'agency process id', 'aetc', 'scc'])
+
+    test_df = eis_df_aetc_nan_2.merge(aetc, left_on="aetc", right_on="Code", how="left")
+    test_df_na = test_df.loc[test_df.Code.isna()]
+
+    eis_df_aetc_not_nan = eis_df_aetc.loc[~ eis_df_aetc.code_1.isna()]
+    eis_df_aetc_not_nan_iah = eis_df_aetc_not_nan.loc[lambda df: df["agency facility id"] == "IAH"]
+
+    len(eis_df_aetc_nan_999) + len(test_df) + len(eis_df_aetc_not_nan) + len(eis_df_aetc_nan_nan)

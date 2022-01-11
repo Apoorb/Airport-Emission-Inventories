@@ -138,7 +138,7 @@ if __name__ == "__main__":
     emis_fac_scc = pd.read_csv(path_out_fac_scc)
     emis_cnty_scc = pd.read_csv(path_out_cnty_scc)
 
-    filter_pols = ['CO', 'CO2', 'NH3', 'NOX', 'PM10', 'PM2.5', 'Pb', 'SO2', 'VOC']
+    filter_pols = ["CO", "CO2", "NH3", "NOX", "PM10", "PM2.5", "Pb", "SO2", "VOC"]
     emis_fac_scc_fil = emis_fac_scc.loc[lambda df: df.PolID.isin(filter_pols)]
     emis_cnty_scc_fil = emis_cnty_scc.loc[lambda df: df.PolID.isin(filter_pols)]
     emis_fac_scc_fil["County"] = emis_fac_scc_fil.County.str.title()
@@ -191,7 +191,9 @@ if __name__ == "__main__":
     emis_fac_scc_fil_spec["PolNm"] = emis_fac_scc_fil_spec.PolNm.fillna(
         emis_fac_scc_fil_spec["PolID"]
     )
-    emis_fac_scc_fil_spec_1 = emis_fac_scc_fil_spec.merge(nfdc_1, on="Facility", how="left")
+    emis_fac_scc_fil_spec_1 = emis_fac_scc_fil_spec.merge(
+        nfdc_1, on="Facility", how="left"
+    )
     assert emis_fac_scc_fil_spec_1.latitude.isna().sum() == 0
     emis_fac_scc_fil_spec_1.to_csv(path_out_fac_scc_spec, index=False)
 

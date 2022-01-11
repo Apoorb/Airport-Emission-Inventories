@@ -3,13 +3,13 @@ from pathlib import Path
 
 
 path12345 = Path(
-    r"C:\Users\a-bibeka\Downloads"
+    r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\external"
     r"\2017neiJan_facility_process_byregions\point_12345.csv"
 )
 point12345 = pd.read_csv(path12345)
 
 path678910 = Path(
-    r"C:\Users\a-bibeka\Downloads"
+    r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\external"
     r"\2017neiJan_facility_process_byregions\point_678910.csv"
 )
 point678910 = pd.read_csv(path678910)
@@ -37,8 +37,6 @@ set_inter = set(sccdict.keys()).intersection(set(point12345.scc.unique()))
 set(sccdict.keys()) - set_inter
 set(sccdict.keys()).intersection(set(point678910.scc.unique()))
 
-set(sccdict.keys()).intersection(set(pointunkn.scc.unique()))
-
 
 min(point12345.scc.unique())
 max(point12345.scc.unique())
@@ -55,12 +53,16 @@ point678910_fil = point678910.loc[
     lambda df: (df.state == "TX") & (df.scc.isin(sccdict.keys()))
 ]
 
+
 point678910_fil_dfw = point678910_fil.loc[
     lambda df: df.agency_facility_id.str.lower() == "dfw"
 ]
 point678910_fil_iah = point678910_fil.loc[
     lambda df: df.agency_facility_id.str.lower() == "iah"
 ]
+point678910_fil.calc_method_code.unique()
+point678910_fil_test = point678910_fil.loc[point678910_fil.calc_method_code == 13]
+
 
 fac_map = point678910_fil.drop_duplicates(["eis_facility_id", "agency_facility_id"])
 
