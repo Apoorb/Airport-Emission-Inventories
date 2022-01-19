@@ -1,3 +1,6 @@
+"""
+Create ASIF file for IAH and DFW based on ERG data.
+"""
 import numpy as np
 import pandas as pd
 from copy import deepcopy

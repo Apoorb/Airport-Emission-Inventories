@@ -129,5 +129,25 @@ df_tot = (
     .reset_index()
 )
 
-
 epa_ltos_iah_dfw.groupby("FacilitySiteIdentifier").EPA_LTO.sum()
+erg_epa_emis_iah_dfw = df_tot
+erg_epa_emis_iah_dfw_1 = erg_epa_emis_iah_dfw.rename(columns={"emis_st": "erg_epa_emis_tons"}).drop(columns="ltos")
+
+path_tti_emis = Path(r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed\report_tables\emis_ltos_2020_v2.xlsx")
+df_tti = pd.read_excel(path_tti_emis, "cntr_uncntr", index_col=0)
+df_tti_emis_iah_dfw = df_tti.loc[df_tti.facility_id.isin(["iah", "dfw"])]
+df_tti_emis_iah_dfw_1 = df_tti_emis_iah_dfw.groupby(["facility_id", "eis_pollutant_id"]).cntr_enis_tons.sum().reset_index()
+
+pol_tti = ['CO', 'NOX', 'PM10-PRI', 'PM25-PRI', 'SO2', 'VOC']
+pol_erg = ['CO', 'NOx', 'PM10', 'PM25', 'SOx', 'VOC']
+pol_map = {i:j for i,j in zip(pol_tti, pol_erg)}
+
+df_tti_emis_iah_dfw_1["pollutants"] = df_tti_emis_iah_dfw_1.eis_pollutant_id.map(pol_map)
+df_tti_emis_iah_dfw_2 = df_tti_emis_iah_dfw_1.loc[lambda df: ~ df.pollutants.isna()].drop(columns="eis_pollutant_id").rename(columns={"cntr_enis_tons":"tti_emis_tons"})
+
+df_tti_erg_emis = erg_epa_emis_iah_dfw_1.merge(df_tti_emis_iah_dfw_2, on=["facility_id", 'pollutants'])
+
+df_tti_erg_emis["diff1"] = (df_tti_erg_emis.tti_emis_tons - df_tti_erg_emis.erg_epa_emis_tons)
+df_tti_erg_emis["per_diff"] = (df_tti_erg_emis.diff1) / df_tti_erg_emis.erg_epa_emis_tons
+path_out_emis = Path.joinpath(path_common, "erg_epa_tti_emis_iah_dfw.xlsx")
+df_tti_erg_emis.to_excel(path_out_emis)
