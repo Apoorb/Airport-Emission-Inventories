@@ -80,10 +80,11 @@ filt_counties_ls = list(filt_counties)
 
 emis_cnty_scc_fil_spec = pd.read_csv(path_cnty_scc_spec)
 emis_19_20_pq = pq.ParquetDataset(
-    path_out_raw_concat,
-    filters=[[("Year", "in", [2019, 2020])], [("FIPS", "in", filt_counties_ls)]],
+    path_out_raw_concat, filters=[("Year", "in", [2019, 2020])]
 )
-emis_df_19_20 = emis_19_20_pq.read().to_pandas()
+emis_df_19_20 = (
+    emis_19_20_pq.read().to_pandas().loc[lambda df: (df.FIPS.isin(filt_counties_ls))]
+)
 emis_19_20_pq.validate_schemas()
 emis_df_19_20.dtypes
 emis_df_19_20 = emis_df_19_20.assign(
@@ -93,9 +94,7 @@ emis_df_19_20 = emis_df_19_20.assign(
 )
 
 emis_df_19_20_filt = emis_df_19_20.loc[
-    lambda df: (df.FIPS.isin(filt_counties_ls))
-    & (df.PolID == "CO2")
-    & (df.Mode == "Aircraft")
+    lambda df: (df.PolID == "CO") & (df.Mode == "Aircraft")
 ]
 emis_df_19_20_filt = emis_df_19_20_filt.reset_index(drop=True)
 
@@ -107,6 +106,7 @@ ltos = (
     )
     .LTOs.sum()
     .reset_index()
+    .assign(Operations=lambda df: df.LTOs * 2)
 )
 ltos["County"] = ltos.FIPS.map(filt_counties)
 pol_ids = emis_cnty_scc_fil_spec[["PolID", "PolNm"]].drop_duplicates()
@@ -137,13 +137,23 @@ emis_filt = emis_filt.filter(
     ]
 )
 ltos = ltos.filter(
-    items=["Year", "FIPS", "County", "Facility", "Airport", "SCC", "SccDesc", "LTOs"]
+    items=[
+        "Year",
+        "FIPS",
+        "County",
+        "Facility",
+        "Airport",
+        "SCC",
+        "SccDesc",
+        "LTOs",
+        "Operations",
+    ]
 )
 
 path_out_ltos = Path.home().joinpath(path_out_raw_concat.parent, "ltos_dfw_19_20.xlsx")
 path_out_emis = Path.home().joinpath(path_out_raw_concat.parent, "emis_dfw_19_20.xlsx")
-ltos.to_csv(path_out_ltos, index=False)
-emis_filt.to_csv(path_out_emis, index=False)
+ltos.to_excel(path_out_ltos, index=False)
+emis_filt.to_excel(path_out_emis, index=False)
 
 # Testing
 ########################################################################################
