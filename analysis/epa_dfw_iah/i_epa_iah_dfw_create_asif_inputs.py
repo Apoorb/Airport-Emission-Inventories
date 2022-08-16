@@ -84,7 +84,6 @@ if __name__ == "__main__":
         epa_ltos_iah_dfw_fil.AircraftEngineTypeCode > 999900
     ]
 
-
     # See the Ops with Unknown Airframe+EngineIDs
     epa_ltos_iah_dfw_fil.groupby("FacilitySiteIdentifier").EPA_LTO.agg(sum) * 2
     # See the Ops without Unknown Airframe+EngineIDs
@@ -145,7 +144,6 @@ if __name__ == "__main__":
     fix_merge_3 = fix_merge_2[idx]
     aedt_epa_lookup_3 = pd.concat([aedt_epa_lookup_2, fix_merge_1, fix_merge_3])
 
-
     # Add AEDT airframe and engine information to the EPA data.
     epa_ltos_iah_dfw_fil_1_1 = epa_ltos_iah_dfw_fil_1.merge(
         aedt_epa_lookup_3, left_on="AircraftEngineTypeCode", right_on="Code", how="left"
@@ -172,7 +170,9 @@ if __name__ == "__main__":
     path_out = Path(
         r"C:\Users\a-bibeka\PycharmProjects\airport_ei\data\processed\epa_ltos_review"
     )
-    path_out_mapping = Path.joinpath(path_out, "mapping_epa_to_aedt_conflict_resolve_min.xlsx")
+    path_out_mapping = Path.joinpath(
+        path_out, "mapping_epa_to_aedt_conflict_resolve_min.xlsx"
+    )
     path_out_iah = Path.joinpath(path_out, "iah_input_fi_epa_raw.xlsx")
     path_out_dfw = Path.joinpath(path_out, "dfw_input_fi_epa_raw.xlsx")
     xlwr = pd.ExcelWriter(path_out_mapping)
@@ -215,6 +215,7 @@ if __name__ == "__main__":
             split_ops_arrdep,
             get_arptdummy_trks_layout,
         )
+
         # Get profiles, APU, engine, airframe, and equipment data.
         flt_db_dict = get_flt_db_tabs()
         ops_airfm_eng = add_eng_arfm_equip_cols(

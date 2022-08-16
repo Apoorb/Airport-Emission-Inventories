@@ -36,7 +36,7 @@ def read_yr_raw_emis(path_emis_, verbose=True):
         "UNCONTROLLED_ANNUAL_EMIS_ST": "UncntrAnnEmisST",
         "CONTROLLED_ANNUAL_EMIS_ST": "CntrAnnEmisST",
         "UNCONTROLLED_DAILY_EMIS_ST": "UncntrDailyEmisST",
-        "CONTROLLED_DAILY_EMIS_ST": "UncntrDailyEmisST",
+        "CONTROLLED_DAILY_EMIS_ST": "CntrDailyEmisST",
     }
     df_1 = df.rename(columns=rename_map)
     df_1["Year"] = year
