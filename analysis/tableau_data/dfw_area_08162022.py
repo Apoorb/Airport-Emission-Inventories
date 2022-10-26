@@ -79,6 +79,10 @@ filt_counties = {
 filt_counties_ls = list(filt_counties)
 
 emis_cnty_scc_fil_spec = pd.read_csv(path_cnty_scc_spec)
+
+# test_emis_19_20_pq = pq.ParquetDataset(
+#     path_out_raw_concat, filters=[("Year", "in", [2019, 2020]), ("FIPS", "in", filt_counties_ls)]
+# ).read(use_pandas_metadata=True).to_pandas()
 emis_19_20_pq = pq.ParquetDataset(
     path_out_raw_concat, filters=[("Year", "in", [2019, 2020])]
 )

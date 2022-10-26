@@ -24,8 +24,8 @@ path_tti_rel = (
     r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - aedt_ems_2019"
     r"\bakFile_metricResults\Reliever"
 )
-path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_comm_reliev.xlsx")
-path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_reliev.xlsx")
+path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_comm_reliev_10262022.xlsx")
+path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_comm_reliev_10262022.xlsx")
 
 tti_files = [file for file in Path(path_tti_com).glob("*.csv")] + [
     file for file in Path(path_tti_rel).glob("*.csv")
@@ -107,10 +107,12 @@ for file in tti_files:
         [
             df["Mode"] == "Climb Below Mixing Height",
             df["Mode"] == "Descend Below Mixing Height",
+            df["Mode"] == "Taxi Out",
+            df["Mode"] == "Taxi In",
             df["Mode"] == "GSE LTO",
             df["Mode"] == "APU",
         ],
-        ["Climb Below Mixing Height", "Descend Below Mixing Height", "GSE LTO", "APU"],
+        ["Climb Below Mixing Height", "Descend Below Mixing Height", "Taxi Out", "Taxi In", "GSE LTO", "APU"],
         np.nan,
     )
     df.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)
