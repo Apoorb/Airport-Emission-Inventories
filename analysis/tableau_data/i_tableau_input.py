@@ -103,9 +103,7 @@ def agg_yr_cnty(emis_df_):
 
 if __name__ == "__main__":
     path_com = Path(
-        r"C:\Users\a-bibeka\OneDrive - Texas A&M Transportation Institute"
-        r"\Documents\Projects\Airports\Data Analysis\Data"
-        r"\uncntr_cntr_emis_raw_data"
+        r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - 2020 Texas Statewide Airport EI\Visualization\Data\Tao_EIS_txt_files"
     )
     path_nfdc = Path.home().joinpath(path_com.parent, "FAA_NFDC_Facilities.csv")
     path_out_fac_scc = Path.home().joinpath(path_com.parent, "emis_fac_scc.csv")
@@ -119,9 +117,8 @@ if __name__ == "__main__":
     path_out_ltos_fac = Path.home().joinpath(path_com.parent, "ltos_fac.csv")
     path_spec = Path.home().joinpath(path_com.parent, "speciation_fin.xlsx")
     path_emis_raw_data = list(path_com.glob("*.txt"))
-
     # Read data
-    debug_df = read_yr_raw_emis(path_emis_raw_data[9])
+    debug_df = read_yr_raw_emis(path_emis_raw_data[0])
     emis_fac_scc, lto_fac_scc = agg_yr_fac(debug_df)
     # debug_lto = emis_fac_scc.loc[emis_fac_scc.LTOs_x != emis_fac_scc.LTOs_y]
     emis_cnty_scc = agg_yr_cnty(debug_df)
