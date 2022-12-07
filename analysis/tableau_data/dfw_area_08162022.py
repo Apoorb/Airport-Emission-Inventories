@@ -19,7 +19,9 @@ def agg_yr_fac_ltos(emis_df_):
     Aggregate the raw data by year, facility, and scc.
     """
     emis_df_ltos = (
-        emis_df_.loc[(emis_df_.PolID == "CO2") & (emis_df_.Mode == "Aircraft"),]
+        emis_df_.loc[
+            (emis_df_.PolID == "CO2") & (emis_df_.Mode == "Aircraft"),
+        ]
         .groupby(
             ["Year", "County", "FIPS", "Facility", "Airport", "SCC", "SccDesc", "PolID"]
         )

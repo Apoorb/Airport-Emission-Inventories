@@ -41,7 +41,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"Airport-EI"
+project = "Airport-EI"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,8 +184,8 @@ latex_documents = [
     (
         "index",
         "airport_ei.tex",
-        u"Airport-EI Documentation",
-        u"Apoorba Bibeka",
+        "Airport-EI Documentation",
+        "Apoorba Bibeka",
         "manual",
     )
 ]
@@ -215,9 +215,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ("index", "airport_ei", u"Airport-EI Documentation", [u"Apoorba Bibeka"], 1)
-]
+man_pages = [("index", "airport_ei", "Airport-EI Documentation", ["Apoorba Bibeka"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -232,8 +230,8 @@ texinfo_documents = [
     (
         "index",
         "airport_ei",
-        u"Airport-EI Documentation",
-        u"Apoorba Bibeka",
+        "Airport-EI Documentation",
+        "Apoorba Bibeka",
         "Airport-EI",
         "Develop Texas Airport's Emission Inventory.",
         "Miscellaneous",

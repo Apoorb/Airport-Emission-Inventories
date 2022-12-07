@@ -109,7 +109,14 @@ for file in tti_files:
             df["Mode"] == "GSE LTO",
             df["Mode"] == "APU",
         ],
-        ["Climb Below Mixing Height", "Descend Below Mixing Height", "Taxi Out", "Taxi In", "GSE LTO", "APU"],
+        [
+            "Climb Below Mixing Height",
+            "Descend Below Mixing Height",
+            "Taxi Out",
+            "Taxi In",
+            "GSE LTO",
+            "APU",
+        ],
         np.nan,
     )
     df.rename(columns={"aircraft_id": "tfmsc_aircraft_id"}, inplace=True)

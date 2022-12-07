@@ -79,7 +79,9 @@ class AsifXml:
         if len(self.heliops) != 0:
             self.hasheli = True
 
-    def set_scn_meta(self,) -> None:
+    def set_scn_meta(
+        self,
+    ) -> None:
         scn_attr = {
             "name": self.nm,
             "startTime": self.starttime,

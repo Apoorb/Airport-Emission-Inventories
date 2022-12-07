@@ -197,7 +197,7 @@ if __name__ == "__main__":
         elif fac_id == "iah":
             arpt_db = "2020_IAH_Final"
         else:
-            ""
+            """"""
         # Get Annual Ops from the facility.
         annual_ops = epa_ltos_iah_dfw_fil_1_1.loc[
             lambda df: df.facility_id == fac_id

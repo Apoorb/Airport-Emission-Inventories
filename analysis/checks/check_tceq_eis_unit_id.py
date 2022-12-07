@@ -51,6 +51,9 @@ if __name__ == "__main__":
         lambda df: df["agency facility id"] == "IAH"
     ]
 
-    len(eis_df_aetc_nan_999) + len(test_df) + len(eis_df_aetc_not_nan) + len(
-        eis_df_aetc_nan_nan
+    (
+        len(eis_df_aetc_nan_999)
+        + len(test_df)
+        + len(eis_df_aetc_not_nan)
+        + len(eis_df_aetc_nan_nan)
     )

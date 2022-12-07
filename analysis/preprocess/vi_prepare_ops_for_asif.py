@@ -134,7 +134,7 @@ def get_flt_db_tabs(flt_db="FLEET") -> dict[pd.DataFrame, pd.DataFrame, pd.DataF
 
 
 def get_arptdummy_trks_layout(
-    arptdummy_db="get_iah_tracks"
+    arptdummy_db="get_iah_tracks",
 ) -> dict[pd.DataFrame, pd.DataFrame]:
     conn = connect_to_sql_server(database_nm=arptdummy_db)
     tracks = pd.read_sql("SELECT * FROM [dbo].[APT_TRACK]", conn)

@@ -43,8 +43,14 @@ def filter_erlt(aedt_erlt_):
                 df["Mode"] == "GSE LTO",
                 df["Mode"] == "APU",
             ],
-            ["Climb Below Mixing Height", "Descend Below Mixing Height", "Taxi Out",
-             "Taxi In", "GSE LTO", "APU"],
+            [
+                "Climb Below Mixing Height",
+                "Descend Below Mixing Height",
+                "Taxi Out",
+                "Taxi In",
+                "GSE LTO",
+                "APU",
+            ],
             np.nan,
         )
         df_1_fil = df_1.loc[df_1["Mode"] != "nan"]
@@ -521,8 +527,12 @@ if __name__ == "__main__":
         path_tti_fi, "OPUA_Airport_2019_opmode_st.csv"
     )
     path_tasp = Path.home().joinpath(path_tti_fi, "TASP_Airport_2019_opmode_st.csv")
-    path_out_emis = Path.home().joinpath(PATH_PROCESSED, "emis_non_comm_reliev_10262022.xlsx")
-    path_out_flt = Path.home().joinpath(PATH_PROCESSED, "fleet_non_comm_reliev_10262022.xlsx")
+    path_out_emis = Path.home().joinpath(
+        PATH_PROCESSED, "emis_non_comm_reliev_10262022.xlsx"
+    )
+    path_out_flt = Path.home().joinpath(
+        PATH_PROCESSED, "fleet_non_comm_reliev_10262022.xlsx"
+    )
     med_heli_tmp = pd.read_csv(path_med_heli)
 
     # 2. Get the AEDT ERLTs
